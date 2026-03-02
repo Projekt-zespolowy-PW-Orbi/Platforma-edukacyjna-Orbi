@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express, { type Express } from "express";
 import { EngineAdapter } from "infrastructure/engine.adapter.js";
 import { DoubleUseCase } from "application/use-cases/double.use-case.js";
@@ -25,9 +26,10 @@ const isMain =
 if (isMain) {
   const { app, shutdown } = buildApp();
   const port = Number(process.env.PORT ?? 3001);
+  const host = process.env.HOST ?? "0.0.0.0";
 
-  const server = app.listen(port, "0.0.0.0", () => {
-    console.log(`Server listening on port ${String(port)}`);
+  const server = app.listen(port, host, () => {
+    console.log(`Server listening on ${host}:${String(port)}`);
   });
 
   const onSignal = (): void => {
