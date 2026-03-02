@@ -1,6 +1,6 @@
 import { describe, it, expect, afterAll } from "vitest";
 import request from "supertest";
-import { buildApp } from "../server.js";
+import { buildApp } from "server.js";
 
 const { app, shutdown } = buildApp();
 

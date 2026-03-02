@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { DoubleRequestSchema, DoubleResponseSchema } from "../index.js";
+import { DoubleRequestSchema, DoubleResponseSchema } from "index.js";
 
 describe("DoubleRequestSchema", () => {
   it("accepts valid request", () => {

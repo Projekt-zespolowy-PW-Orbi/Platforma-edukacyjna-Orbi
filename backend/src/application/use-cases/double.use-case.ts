@@ -1,4 +1,4 @@
-import type { IEnginePort } from "../../domain/ports/engine.port.js";
+import type { IEnginePort } from "domain/ports/engine.port.js";
 
 export class DoubleUseCase {
   constructor(private engine: IEnginePort) {}

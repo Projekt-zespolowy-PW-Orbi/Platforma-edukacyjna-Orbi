@@ -1,8 +1,8 @@
 import express, { type Express } from "express";
-import { EngineAdapter } from "./infrastructure/engine.adapter.js";
-import { DoubleUseCase } from "./application/use-cases/double.use-case.js";
-import { DoubleController } from "./presentation/controllers/double.controller.js";
-import { createDoubleRouter } from "./presentation/routes/double.route.js";
+import { EngineAdapter } from "infrastructure/engine.adapter.js";
+import { DoubleUseCase } from "application/use-cases/double.use-case.js";
+import { DoubleController } from "presentation/controllers/double.controller.js";
+import { createDoubleRouter } from "presentation/routes/double.route.js";
 
 export function buildApp(): { app: Express; shutdown: () => void } {
   const engine = new EngineAdapter();

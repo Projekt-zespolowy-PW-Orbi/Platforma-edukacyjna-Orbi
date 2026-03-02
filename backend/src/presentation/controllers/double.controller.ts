@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import type { DoubleUseCase } from "../../application/use-cases/double.use-case.js";
+import type { DoubleUseCase } from "application/use-cases/double.use-case.js";
 
 export class DoubleController {
   constructor(private useCase: DoubleUseCase) {}

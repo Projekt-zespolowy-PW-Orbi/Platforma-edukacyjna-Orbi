@@ -3,7 +3,7 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createInterface } from "node:readline";
 import { nanoid } from "nanoid";
-import type { IEnginePort } from "../domain/ports/engine.port.js";
+import type { IEnginePort } from "domain/ports/engine.port.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const isWindows = process.platform === "win32";
