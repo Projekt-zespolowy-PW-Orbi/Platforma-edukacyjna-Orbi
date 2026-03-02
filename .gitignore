@@ -1,0 +1,27 @@
+node_modules/
+dist/
+build/
+.turbo/
+*.local
+tsconfig.node.tsbuildinfo
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# C++ build artifacts
+*.o
+*.obj
+*.exe
+*.out
+
+# Environment
+.env
+.env.*
