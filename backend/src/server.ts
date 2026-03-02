@@ -14,7 +14,7 @@ export function buildApp(): { app: Express; shutdown: () => void } {
   app.use(express.json());
   app.use(doubleRouter);
 
-  return { app, shutdown: () => engine.shutdown() };
+  return { app, shutdown: () => { engine.shutdown(); } };
 }
 
 const isMain =
@@ -24,13 +24,13 @@ const isMain =
 
 if (isMain) {
   const { app, shutdown } = buildApp();
-  const port = Number(process.env["PORT"] ?? 3001);
+  const port = Number(process.env.PORT ?? 3001);
 
   const server = app.listen(port, "0.0.0.0", () => {
-    console.log(`Server listening on port ${port}`);
+    console.log(`Server listening on port ${String(port)}`);
   });
 
-  const onSignal = () => {
+  const onSignal = (): void => {
     shutdown();
     server.close();
   };

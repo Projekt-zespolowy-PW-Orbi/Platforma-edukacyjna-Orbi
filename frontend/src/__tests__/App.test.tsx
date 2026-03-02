@@ -2,6 +2,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { App } from "App.js";
 
+interface MockResponse {
+  ok: boolean;
+  json: () => Promise<{ result: number }>;
+}
+
 beforeEach(() => {
   vi.restoreAllMocks();
 });
@@ -13,10 +18,11 @@ describe("App", () => {
   });
 
   it("fetches and shows result on click", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
+    const mockResponse: MockResponse = {
       ok: true,
       json: () => Promise.resolve({ result: 2 }),
-    } as Response);
+    };
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(mockResponse as Response);
 
     render(<App />);
     fireEvent.click(screen.getByRole("button", { name: /double 1/i }));

@@ -10,17 +10,24 @@ const isWindows = process.platform === "win32";
 const binaryName = isWindows ? "orbi-engine.exe" : "orbi-engine";
 const enginePath = resolve(__dirname, "../../../packages/engine/build", binaryName);
 
-type PendingRequest = {
+interface PendingRequest {
   resolve: (value: unknown) => void;
   reject: (reason: Error) => void;
-};
+}
+
+interface EngineResponse {
+  id: string;
+  ok?: boolean;
+  result?: number;
+  error?: string;
+}
 
 export class EngineAdapter implements IEnginePort {
   private child: ChildProcess | null = null;
   private pending = new Map<string, PendingRequest>();
 
   private ensureRunning(): ChildProcess {
-    if (this.child && this.child.exitCode === null) return this.child;
+    if (this.child?.exitCode === null) return this.child;
 
     this.child = spawn(enginePath, { stdio: ["pipe", "pipe", "pipe"] });
 
@@ -29,7 +36,7 @@ export class EngineAdapter implements IEnginePort {
     const rl = createInterface({ input: stdout });
     rl.on("line", (line: string) => {
       try {
-        const msg = JSON.parse(line);
+        const msg = JSON.parse(line) as EngineResponse;
         const req = this.pending.get(msg.id);
         if (!req) return;
         this.pending.delete(msg.id);

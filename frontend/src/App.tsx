@@ -1,5 +1,9 @@
 import { useState } from "react";
 
+interface DoubleResponse {
+  result: number;
+}
+
 export function App() {
   const [result, setResult] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
@@ -14,8 +18,8 @@ export function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ x: 1 }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
+      if (!res.ok) throw new Error(`HTTP ${String(res.status)}`);
+      const data = (await res.json()) as DoubleResponse;
       setResult(data.result);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
