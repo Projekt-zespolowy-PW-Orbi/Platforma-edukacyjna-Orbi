@@ -1,6 +1,5 @@
 #include <iostream>
 #include <string>
-#include <sstream>
 
 // Minimal JSON helpers — no external dependencies
 static std::string extract_string(const std::string& json, const std::string& key) {
@@ -42,20 +41,26 @@ static long long extract_number(const std::string& json, const std::string& key)
 }
 
 int main() {
+    // Read exactly one line from stdin, process it, and exit
     std::string line;
-    while (std::getline(std::cin, line)) {
-        if (line.empty()) continue;
-
-        std::string id = extract_string(line, "id");
-        std::string op = extract_string(line, "op");
-        long long x = extract_number(line, "x");
-
-        if (op == "double") {
-            long long result = x * 2;
-            std::cout << "{\"id\":\"" << id << "\",\"ok\":true,\"result\":" << result << "}" << std::endl;
-        } else {
-            std::cout << "{\"id\":\"" << id << "\",\"ok\":false,\"error\":\"unknown op: " << op << "\"}" << std::endl;
-        }
+    if (!std::getline(std::cin, line)) {
+        return 1;
     }
+
+    if (line.empty()) {
+        return 1;
+    }
+
+    std::string id = extract_string(line, "id");
+    std::string op = extract_string(line, "op");
+    long long x = extract_number(line, "x");
+
+    if (op == "double") {
+        long long result = x * 2;
+        std::cout << "{\"id\":\"" << id << "\",\"ok\":true,\"result\":" << result << "}" << std::endl;
+    } else {
+        std::cout << "{\"id\":\"" << id << "\",\"ok\":false,\"error\":\"unknown op: " << op << "\"}" << std::endl;
+    }
+
     return 0;
 }
