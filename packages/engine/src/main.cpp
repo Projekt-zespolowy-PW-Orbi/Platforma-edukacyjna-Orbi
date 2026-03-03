@@ -1,4 +1,5 @@
 #include <iostream>
+#include "parser/parser.hpp"
 #include <string>
 
 // Minimal JSON helpers — no external dependencies
@@ -40,7 +41,18 @@ static long long extract_number(const std::string& json, const std::string& key)
     return std::stoll(num_str);
 }
 
-int main() {
+std::ostream &operator<<(std::ostream &os, const std::vector<std::string> &obj)
+{
+    os << "vector: (" << std::endl;
+    for(auto s : obj) {
+        os << s << std::endl;
+    }
+    os << ")" << std::endl;
+    return os;
+}
+
+// JSON mode: process one JSON command and exit
+int json_mode() {
     // Read exactly one line from stdin, process it, and exit
     std::string line;
     if (!std::getline(std::cin, line)) {
@@ -63,4 +75,61 @@ int main() {
     }
 
     return 0;
+}
+
+// Parser mode: interactive math expression parser
+int parser_mode() {
+    std::string input;
+    
+    while (true)
+    {
+        std::cout << "Enter text: ";
+        std::getline(std::cin, input);
+        
+        // Remove BOM if present (UTF-8 BOM: EF BB BF)
+        if(input.size() >= 3 && 
+        (unsigned char)input[0] == 0xEF && 
+        (unsigned char)input[1] == 0xBB && 
+        (unsigned char)input[2] == 0xBF) {
+            input = input.substr(3);
+        }
+        
+        // Remove any leading whitespace/invisible chars
+        while(!input.empty() && (input[0] == ' ' || input[0] == '\t' || (unsigned char)input[0] > 127)) {
+            input = input.substr(1);
+        }
+        
+        std::cout << "You entered: " << input << std::endl;
+
+        if(input.empty()) {
+            std::cout << "Empty input" << std::endl;
+            return 0;
+        }
+
+        input = math::Parser::fix_brackets(input);
+        math::Function* t = math::Function::convert(input);
+        std::cout << "Basic:" << std::endl << *t;
+        t = t->simplify();
+        std::cout << "Simplified:" << std::endl << *t;
+
+        std::cout << "-----------------------------" << std::endl;
+        std::cout << "Do you want to continue? (y/n): ";
+        std::string cont;
+        std::getline(std::cin, cont);
+        if(cont != "y" && cont != "Y") {
+            break;
+        }
+    }
+    
+    return 0;
+}
+
+int main(int argc, char *argv[]) {
+    // Default to JSON mode (for backward compatibility)
+    // Use --parser flag for interactive parser mode
+    if (argc > 1 && std::string(argv[1]) == "--parser") {
+        return parser_mode();
+    } else {
+        return json_mode();
+    }
 }

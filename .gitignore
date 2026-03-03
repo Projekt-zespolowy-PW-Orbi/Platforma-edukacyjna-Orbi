@@ -21,6 +21,7 @@ Thumbs.db
 *.obj
 *.exe
 *.out
+*.pdb
 
 # Environment
 .env
