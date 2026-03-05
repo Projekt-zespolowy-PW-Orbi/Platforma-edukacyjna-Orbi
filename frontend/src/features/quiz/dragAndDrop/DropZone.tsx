@@ -14,8 +14,17 @@ const DropZone = ({
   });
 
   return (
-    <div
-      onClick={() => match && onRemove(id)}
+    <button
+      onClick={() => {
+        if (match) {
+          onRemove(id);
+        }
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          onRemove(id);
+        }
+      }}
       ref={setNodeRef}
       style={{
         width: "100px",
@@ -27,7 +36,7 @@ const DropZone = ({
       }}
     >
       {match}
-    </div>
+    </button>
   );
 };
 

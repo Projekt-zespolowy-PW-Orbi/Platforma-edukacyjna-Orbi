@@ -1,7 +1,7 @@
-type QuizResultProps = {
+interface QuizResultProps {
   result: "correct" | "wrong";
   onClose: () => void;
-};
+}
 
 const QuizResult = ({ result, onClose }: QuizResultProps) => {
   return (

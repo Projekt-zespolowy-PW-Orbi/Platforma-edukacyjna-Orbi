@@ -17,3 +17,8 @@
   border-radius: 10px;
   text-align: center;
 }
+
+.dropzone {
+  border: none;
+  background: none;
+}

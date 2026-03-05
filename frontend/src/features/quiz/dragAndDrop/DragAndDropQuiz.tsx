@@ -89,7 +89,14 @@ const DragAndDropQuiz = () => {
         </div>
       </div>
       <button onClick={checkAnswers}>Sprawdź</button>
-      {result && <QuizResult result={result} onClose={() => setResult(null)} />}
+      {result && (
+        <QuizResult
+          result={result}
+          onClose={() => {
+            setResult(null);
+          }}
+        />
+      )}
     </DndContext>
   );
 };
