@@ -7,7 +7,7 @@ const DraggableItem = ({ id, label }: { id: string; label: string }) => {
 
   const style = {
     transform: transform
-      ? `translate(${transform.x}px, ${transform.y}px)`
+      ? `translate(${String(transform.x)}px, ${String(transform.y)}px)`
       : undefined,
     padding: "10px",
     border: "1px solid black",

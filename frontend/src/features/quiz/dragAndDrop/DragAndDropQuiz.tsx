@@ -1,4 +1,5 @@
 import { DndContext } from "@dnd-kit/core";
+import type { DragEndEvent } from "@dnd-kit/core";
 import { useState } from "react";
 import DraggableItem from "./DraggableItem";
 import DropZone from "./DropZone";
@@ -20,13 +21,13 @@ const shuffled = shuffleArray(colors);
 const DragAndDropQuiz = () => {
   const [matches, setMatches] = useState<Record<string, string | null>>({});
 
-  const handleDragEnd = (event: any) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over) {
       setMatches((prev) => ({
         ...prev,
-        [over.id]: active.id,
+        [over.id as string]: active.id as string,
       }));
     }
   };
@@ -49,9 +50,8 @@ const DragAndDropQuiz = () => {
         {/* GÓRNY RZĄD */}
         <div style={{ display: "flex", gap: "10px" }}>
           {colors.map((item) => (
-            <div>
+            <div key={item.id}>
               <div
-                key={item.id}
                 style={{
                   width: "100px",
                   height: "100px",
