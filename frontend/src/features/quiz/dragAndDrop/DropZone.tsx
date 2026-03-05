@@ -1,12 +1,21 @@
 import { useDroppable } from "@dnd-kit/core";
 
-const DropZone = ({ id, match }: { id: string; match?: string | null }) => {
+const DropZone = ({
+  id,
+  match,
+  onRemove,
+}: {
+  id: string;
+  match?: string | null;
+  onRemove: (id: string) => void;
+}) => {
   const { setNodeRef, isOver } = useDroppable({
     id,
   });
 
   return (
     <div
+      onClick={() => match && onRemove(id)}
       ref={setNodeRef}
       style={{
         width: "100px",
