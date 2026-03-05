@@ -1,3 +1,4 @@
+import "./dragAndDropQuiz.css";
 import { DndContext } from "@dnd-kit/core";
 import type { DragEndEvent } from "@dnd-kit/core";
 import { useState } from "react";
@@ -52,6 +53,15 @@ const DragAndDropQuiz = () => {
     }));
   };
 
+  const closeResult = () => {
+    setResult(null);
+  };
+
+  const resetQuiz = () => {
+    setMatches({});
+    setResult(null);
+  };
+
   return (
     <DndContext onDragEnd={handleDragEnd}>
       <div>
@@ -92,9 +102,7 @@ const DragAndDropQuiz = () => {
       {result && (
         <QuizResult
           result={result}
-          onClose={() => {
-            setResult(null);
-          }}
+          onClose={result === "wrong" ? resetQuiz : closeResult}
         />
       )}
     </DndContext>

@@ -7,13 +7,15 @@ const QuizResult = ({ result, onClose }: QuizResultProps) => {
   return (
     <div className="quiz-result-overlay">
       <div className="quiz-result-box">
-        {result === "correct" ? (
-          <h2> Dobrze!</h2>
-        ) : (
-          <h2> Spróbuj jeszcze raz</h2>
-        )}
+        <h2>{result === "correct" ? "Brawo!" : "Spróbuj jeszcze raz"}</h2>
 
-        <button onClick={onClose}>Zamknij</button>
+        <button
+          onClick={() => {
+            onClose();
+          }}
+        >
+          {result === "wrong" ? "Spróbuj jeszcze raz" : "Zamknij"}
+        </button>
       </div>
     </div>
   );
