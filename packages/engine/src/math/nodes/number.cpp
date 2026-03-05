@@ -20,7 +20,7 @@ namespace math
 	void Number::print(std::ostream &os, int depth) const
 	{
 		while(depth--) os << '\t';
-		os << this->number;
+		os << this->number << "," << std::endl;
 	}
 
 	Basic::Basic() {}

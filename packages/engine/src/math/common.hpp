@@ -1,6 +1,10 @@
 #pragma once
 #include <vector>
 #include <algorithm>
+#include <sstream>
+#include <string>
+#include <cctype>
+#include <ostream>
 
 namespace math
 {
@@ -19,8 +23,12 @@ namespace math
 		return false;
 	}
 
+	void remove_white_spaces(std::string& s);
+	void print_tabs(std::ostream& os, int how_many);
+	void erase_comma_if_last(std::stringstream& ss);
+
 	inline const std::vector<char> operators = {'+', '-', '/', '*'};
 	inline const std::vector<char> groupers = {'(', ')'};
-	inline const std::vector<char> white_spaces = {' ', '	'};
+	inline const std::vector<char> white_spaces = {' ', '\t', '\n'};
 	inline const std::vector<char> numbers = {'0','1','2','3','4','5','6','7','8','9'};
 }

@@ -1,6 +1,7 @@
 #include "product.hpp"
 
 #include <map>
+#include <sstream>
 
 #include "../common.hpp"
 
@@ -45,8 +46,15 @@ namespace math
 
 	void Product::print(std::ostream &os, int depth) const
 	{
-		Function::print(os, depth);
-		for(auto p : this->products) p->print(os, depth + 1);
+		std::stringstream ss;
+		Function::print(ss, depth);
+		print_tabs(ss, depth);
+		ss << "{\n";
+		for(auto p : this->products) p->print(ss, depth + 1);
+		erase_comma_if_last(ss);
+		print_tabs(ss, depth);
+		ss << "},\n";
+		os << ss.str();
 	}
 
 	Function* Product::simplify()

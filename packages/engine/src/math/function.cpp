@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <typeinfo>
 #include <vector>
+#include <cxxabi.h>
 
 #include "common.hpp"
 #include "parser.hpp"
@@ -82,7 +83,7 @@ namespace math
 	void Function::print(std::ostream &os, int depth) const
 	{
 		while(depth--) os << '\t';
-		os << typeid(*this).name() << ":\n";
+		os << '"' <<abi::__cxa_demangle(typeid(*this).name(), 0, 0, 0) << '"' << ":\n";
 	}
 
 	std::ostream &operator<<(std::ostream &os, const Function &s)

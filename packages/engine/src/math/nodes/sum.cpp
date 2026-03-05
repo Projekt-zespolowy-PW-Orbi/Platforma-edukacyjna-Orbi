@@ -1,6 +1,7 @@
 #include "sum.hpp"
 
 #include <map>
+#include <sstream>
 
 #include "../common.hpp"
 #include "../function.hpp"
@@ -50,8 +51,16 @@ namespace math
 
 	void Sum::print(std::ostream &os, int depth) const
 	{
-		Function::print(os, depth);
-		for(auto f : this->components) f->print(os, depth + 1);
+		std::stringstream ss;
+		Function::print(ss, depth);
+		print_tabs(ss, depth);
+		ss << "{\n";
+		for(auto f : this->components) f->print(ss, depth + 1);
+		erase_comma_if_last(ss);
+		print_tabs(ss, depth);
+		ss << "},\n";
+		os << ss.str();
+
 	}
 
 	Function* Sum::simplify()
