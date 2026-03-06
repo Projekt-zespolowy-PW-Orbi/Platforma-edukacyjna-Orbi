@@ -1,0 +1,19 @@
+#pragma once
+#include "basic.hpp"
+#include <string>
+
+namespace math
+{
+	class Number : public Basic
+	{
+	public:
+		int number;
+
+		Number(std::string line);
+		Number(int number) : number(number) {}
+
+		virtual void print(std::ostream& os, int depth = 0) const override;
+		virtual Function* simplify() override { return this; }
+		virtual Type get_type() override { return Type::Number; }
+	};
+}
