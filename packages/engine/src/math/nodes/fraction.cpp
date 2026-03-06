@@ -1,5 +1,7 @@
 #include "fraction.hpp"
 
+#include <sstream>
+
 #include "../common.hpp"
 
 #include "number.hpp"
@@ -52,9 +54,16 @@ namespace math
 
 	void Fraction::print(std::ostream &os, int depth) const
 	{
-		Function::print(os, depth);
-		this->numerator->print(os, depth + 1);
-		this->denumerator->print(os, depth + 1);
+		std::stringstream ss;
+		Function::print(ss, depth);
+		print_tabs(ss, depth);
+		ss << "{\n";
+		this->numerator->print(ss, depth + 1);
+		this->denumerator->print(ss, depth + 1);
+		erase_comma_if_last(ss);
+		print_tabs(ss, depth);
+		ss << "},\n";
+		os << ss.str();
 	}
 
 	Function* Fraction::simplify()
