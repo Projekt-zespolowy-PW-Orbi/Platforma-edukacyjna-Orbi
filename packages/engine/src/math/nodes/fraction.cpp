@@ -1,6 +1,7 @@
 #include "fraction.hpp"
 
 #include <sstream>
+#include <numeric>
 
 #include "../common.hpp"
 
@@ -52,6 +53,43 @@ namespace math
 		this->denumerator = denumerator;
 	}
 
+	Function* Fraction::reduce()
+	{
+		Function* reduced = reduce_numbers();
+		if(reduced != this) return reduced;
+
+		return this;
+	}
+
+	Function* Fraction::reduce_numbers()
+	{
+		if(this->numerator->get_type() != Type::Number || this->denumerator->get_type() != Type::Number) {
+			return this;
+		}
+
+		int a = static_cast<Number*>(this->numerator)->number;
+		int b = static_cast<Number*>(this->denumerator)->number;
+
+		if(b == 0) return this;
+		if(a == 0) return new Number(0);
+
+		int g = std::gcd(std::abs(a), std::abs(b));
+		a /= g;
+		b /= g;
+
+		if(b < 0) {
+			a = -a;
+			b = -b;
+		}
+
+		if(b == 1) return new Number(a);
+
+		this->numerator = new Number(a);
+		this->denumerator = new Number(b);
+
+		return this;
+	}
+
 	void Fraction::print(std::ostream &os, int depth) const
 	{
 		std::stringstream ss;
@@ -68,6 +106,8 @@ namespace math
 
 	Function* Fraction::simplify()
 	{
-		return this;
+		this->numerator = this->numerator->simplify();
+		this->denumerator = this->denumerator->simplify();
+		return reduce();
 	}
 }

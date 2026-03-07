@@ -16,5 +16,9 @@ namespace math
 		virtual void print(std::ostream& os, int depth = 0) const override;
 		virtual Function* simplify() override;
 		Type get_type() override { return Type::Fraction; }
+
+	private:
+		Function* reduce();
+		Function* reduce_numbers();	
 	};
 }
