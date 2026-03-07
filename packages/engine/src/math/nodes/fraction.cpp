@@ -73,7 +73,8 @@ namespace math
 		if(b == 0) return this;
 		if(a == 0) return new Number(0);
 
-		int g = std::gcd(std::abs(a), std::abs(b));
+		GcdResult gcd = gcd_with_steps(a, b);
+		int g = gcd.value;
 		a /= g;
 		b /= g;
 
