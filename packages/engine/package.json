@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "g++ -std=c++20 -o build/orbi-engine src/main.cpp",
-    "prebuild": "node -e \"require('fs').mkdirSync('build',{recursive:true})\"",
+    "build": "cmake --build build -j",
+    "prebuild": "cmake -S . -B build -G Ninja",
     "test": "vitest run",
     "dev": "pnpm build"
   },

@@ -10,7 +10,7 @@ const enginePath = resolve(__dirname, "../../build", binaryName);
 
 function sendRequest(
   input: object,
-): Promise<{ id: string; ok: boolean; result?: number; error?: string }> {
+): Promise<{ id: string; ok: boolean; result?: string; error?: string }> {
   return new Promise((resolve, reject) => {
     const proc = spawn(enginePath);
     let stdout = "";
@@ -37,24 +37,14 @@ function sendRequest(
 }
 
 describe("orbi-engine", () => {
-  it("doubles a number", async () => {
-    const res = await sendRequest({ id: "t1", op: "double", x: 5 });
-    expect(res).toEqual({ id: "t1", ok: true, result: 10 });
+  it("simple sum result", async () => {
+    const res = await sendRequest({ id: "t1", op: "simplify", x: "5 + 5 + 5 + 5" });
+    expect(res).toEqual({ id: "t1", ok: true, result: "20" });
   });
 
-  it("doubles zero", async () => {
-    const res = await sendRequest({ id: "t2", op: "double", x: 0 });
-    expect(res).toEqual({ id: "t2", ok: true, result: 0 });
+  it("simple product result", async () => {
+    const res = await sendRequest({ id: "t2", op: "simplify", x: "1 * 2 * 3 * 4" });
+    expect(res).toEqual({ id: "t2", ok: true, result: "24" });
   });
 
-  it("doubles negative", async () => {
-    const res = await sendRequest({ id: "t3", op: "double", x: -3 });
-    expect(res).toEqual({ id: "t3", ok: true, result: -6 });
-  });
-
-  it("rejects unknown op", async () => {
-    const res = await sendRequest({ id: "t4", op: "triple", x: 1 });
-    expect(res.ok).toBe(false);
-    expect(res.error).toContain("unknown op");
-  });
 });
