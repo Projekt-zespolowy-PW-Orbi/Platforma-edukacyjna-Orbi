@@ -13,6 +13,9 @@ namespace math
 	public:
 		Sum(std::string sum);
 		Sum(std::vector<Function*> components) : components(components) {}
+		~Sum() override;
+		
+		std::vector<Function*> take_components();
 
 		virtual void print(std::ostream& os, int depth = 0) const override;
 		virtual Function* simplify() override;

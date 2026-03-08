@@ -3,6 +3,7 @@
 #include <sstream>
 
 #include "../common.hpp"
+#include "../node_utils.hpp"
 #include "number.hpp"
 
 namespace math
@@ -48,6 +49,12 @@ namespace math
 		if(this->base == nullptr) this->base = new Number(0);
 	}
 
+	Exponential::~Exponential()
+	{
+		delete this->base;
+		delete this->power;
+	}
+
 	void Exponential::print(std::ostream &os, int depth) const
 	{
 		std::stringstream ss;	
@@ -64,6 +71,8 @@ namespace math
 
 	Function* Exponential::simplify()
 	{
+		simplify_owned_child(this->base);
+		simplify_owned_child(this->power);
 		return this;
 	}
 }
