@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
-import { setupTestDb, cleanTables, teardownTestDb } from "../../helpers/db.js";
+import { setupTestDb, cleanTables, teardownTestDb } from "__tests__/helpers/db.js";
 import { SentenceRepository } from "infrastructure/repositories/sentence.repository.js";
 import { ConceptRepository } from "infrastructure/repositories/concept.repository.js";
 

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
 import request from "supertest";
-import { setupTestDb, cleanTables, teardownTestDb } from "../../helpers/db.js";
+import { setupTestDb, cleanTables, teardownTestDb } from "__tests__/helpers/db.js";
 import { buildApp } from "server.js";
 
 let app: ReturnType<typeof buildApp>["app"];
