@@ -2,6 +2,7 @@
 
 #include <map>
 #include <sstream>
+#include <functional>
 
 #include "../common.hpp"
 #include "../function.hpp"
@@ -9,6 +10,7 @@
 #include "number.hpp"
 #include "variable.hpp"
 #include "product.hpp"
+#include "fraction.hpp"
 
 namespace math
 {
@@ -65,44 +67,60 @@ namespace math
 
 	Function* Sum::simplify()
 	{
-		int components_len = (int)this->components.size();
 		int constant = 0;
 		std::vector<Function*> new_components;
+		std::vector<Fraction*> fractions;
 		std::map<std::string, int> variables_sum;
 
-		for(int i = 0; i < components_len; i++) {
-			Function* simplified = this->components[i]->simplify();
-
-			switch(simplified->get_type()) {
-				case Type::Sum: {
-					for(auto c : static_cast<Sum*>(simplified)->components) {
-						switch(c->get_type()) {
-							case Type::Number:
-								constant += static_cast<Number*>(c)->number;
-								break;
-							case Type::Variable:
-								variables_sum[static_cast<Variable*>(c)->name] += static_cast<Variable*>(c)->number;
-								break;
-							default:
-								new_components.push_back(c);
-								break;
-						}
+		std::function<void(Function*)> collect_component = [&](Function* node)
+		{
+			switch(node->get_type()) {
+				case Type::Sum:
+					for(Function* c : static_cast<Sum*>(node)->components) {
+						collect_component(c);
 					}
 					break;
-				}
+
 				case Type::Number:
-					constant += static_cast<Number*>(simplified)->number;
+					constant += static_cast<Number*>(node)->number;
 					break;
+
+				case Type::Fraction:
+					fractions.push_back(static_cast<Fraction*>(node));
+					break;
+
 				case Type::Variable:
-					variables_sum[static_cast<Variable*>(simplified)->name] += static_cast<Variable*>(simplified)->number;
+					variables_sum[static_cast<Variable*>(node)->name] += static_cast<Variable*>(node)->number;
 					break;
+
 				default:
-					new_components.push_back(simplified);
+					new_components.push_back(node);
 					break;
 			}
+		};
+
+		for(Function* component : this->components) {
+			Function* simplified = component->simplify();
+			collect_component(simplified);
 		}
 
-		for(auto p : variables_sum) {
+		if(!fractions.empty() && constant != 0) {
+			fractions.push_back(new Fraction(
+				new Number(constant),
+				new Number(1)
+			));
+			constant = 0;
+		}
+
+		if(fractions.size() > 1) {
+			Fraction::make_common_denominator(fractions);
+		}
+
+		for(Fraction* fraction : fractions) {
+			new_components.push_back(fraction);
+		}
+
+		for(const auto& p : variables_sum) {
 			if(p.second > 0) {
 				new_components.push_back(new Variable(p.first, p.second));
 			}
