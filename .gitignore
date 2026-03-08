@@ -21,6 +21,7 @@ Thumbs.db
 *.obj
 *.out
 *.pdb
+*.exe
 
 # Environment
 .env
@@ -28,3 +29,8 @@ Thumbs.db
 .env.*.local
 
 plans/
+
+# exceptions for EXE in packages/engine/tools
+!packages/engine/tools/
+!packages/engine/tools/**/
+!packages/engine/tools/**/*.exe
