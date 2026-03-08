@@ -20,6 +20,14 @@ namespace math
 		std::vector<GcdStep> steps;
 	};
 	GcdResult gcd_with_steps(int a, int b);
+
+	struct LcmResult
+	{
+		int value;
+		GcdResult gcd_result;
+	};
+
+	LcmResult lcm_with_steps(int a, int b);
 	
 	template <typename Container, typename T>
 	bool is_in(const Container& vec, T value)

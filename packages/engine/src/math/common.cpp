@@ -23,6 +23,18 @@ namespace math
 		return result;
 	}
 
+	LcmResult lcm_with_steps(int a, int b)
+	{
+		LcmResult result;
+		result.gcd_result = gcd_with_steps(a, b);
+		if(result.gcd_result.value == 0) {
+			result.value = 0;
+			return result;
+		}
+		result.value = std::abs(a * b) / result.gcd_result.value;
+		return result;
+	}
+
 	void remove_white_spaces(std::string& s)
 	{
 		s.erase(
