@@ -1,21 +1,151 @@
 import "dotenv/config";
 import express, { type Express } from "express";
-import { EngineAdapter } from "infrastructure/engine.adapter.js";
-import { DoubleUseCase } from "application/use-cases/double.use-case.js";
-import { DoubleController } from "presentation/controllers/double.controller.js";
-import { createDoubleRouter } from "presentation/routes/double.route.js";
+import {
+  closeConnection,
+  initializeDatabase,
+} from "infrastructure/database/connection.js";
+import { runMigrations } from "infrastructure/database/migrate.js";
+import { db } from "infrastructure/database/connection.js";
 
-export function buildApp(): { app: Express; shutdown: () => void } {
-  const engine = new EngineAdapter();
-  const doubleUseCase = new DoubleUseCase(engine);
-  const doubleController = new DoubleController(doubleUseCase);
-  const doubleRouter = createDoubleRouter(doubleController);
+// Repositories
+import {
+  ConceptRepository,
+  SentenceRepository,
+  AlgorithmRepository,
+} from "infrastructure/repositories/index.js";
+
+// Concept use cases
+import {
+  CreateConceptUseCase,
+  GetConceptUseCase,
+  UpdateConceptUseCase,
+  DeleteConceptUseCase,
+  ListConceptsUseCase,
+  AddChildConceptUseCase,
+  RemoveChildConceptUseCase,
+} from "application/use-cases/concept/index.js";
+
+// Sentence use cases
+import {
+  CreateSentenceUseCase,
+  GetSentenceUseCase,
+  UpdateSentenceUseCase,
+  DeleteSentenceUseCase,
+  ListSentencesUseCase,
+  LinkSentenceConceptUseCase,
+  UnlinkSentenceConceptUseCase,
+} from "application/use-cases/sentence/index.js";
+
+// Algorithm use cases
+import {
+  CreateAlgorithmUseCase,
+  GetAlgorithmUseCase,
+  UpdateAlgorithmUseCase,
+  DeleteAlgorithmUseCase,
+  ListAlgorithmsUseCase,
+  CreateStepUseCase,
+  AddStepToAlgorithmUseCase,
+  RemoveStepFromAlgorithmUseCase,
+  GetAlgorithmStepsUseCase,
+} from "application/use-cases/algorithm/index.js";
+
+// Controllers
+import { ConceptController } from "presentation/controllers/concept.controller.js";
+import { SentenceController } from "presentation/controllers/sentence.controller.js";
+import { AlgorithmController } from "presentation/controllers/algorithm.controller.js";
+
+// Routes
+import { createConceptRouter } from "presentation/routes/concept.route.js";
+import { createSentenceRouter } from "presentation/routes/sentence.route.js";
+import { createAlgorithmRouter } from "presentation/routes/algorithm.route.js";
+
+export function buildApp(): { app: Express; shutdown: () => Promise<void> } {
+  // Initialize repositories
+  const conceptRepo = new ConceptRepository(db);
+  const sentenceRepo = new SentenceRepository(db);
+  const algorithmRepo = new AlgorithmRepository(db);
+
+  // Initialize concept use cases
+  const createConceptUseCase = new CreateConceptUseCase(conceptRepo);
+  const getConceptUseCase = new GetConceptUseCase(conceptRepo);
+  const updateConceptUseCase = new UpdateConceptUseCase(conceptRepo);
+  const deleteConceptUseCase = new DeleteConceptUseCase(conceptRepo);
+  const listConceptsUseCase = new ListConceptsUseCase(conceptRepo);
+  const addChildConceptUseCase = new AddChildConceptUseCase(conceptRepo);
+  const removeChildConceptUseCase = new RemoveChildConceptUseCase(conceptRepo);
+
+  // Initialize sentence use cases
+  const createSentenceUseCase = new CreateSentenceUseCase(sentenceRepo);
+  const getSentenceUseCase = new GetSentenceUseCase(sentenceRepo);
+  const updateSentenceUseCase = new UpdateSentenceUseCase(sentenceRepo);
+  const deleteSentenceUseCase = new DeleteSentenceUseCase(sentenceRepo);
+  const listSentencesUseCase = new ListSentencesUseCase(sentenceRepo);
+  const linkSentenceConceptUseCase = new LinkSentenceConceptUseCase(sentenceRepo);
+  const unlinkSentenceConceptUseCase = new UnlinkSentenceConceptUseCase(sentenceRepo);
+
+  // Initialize algorithm use cases
+  const createAlgorithmUseCase = new CreateAlgorithmUseCase(algorithmRepo);
+  const getAlgorithmUseCase = new GetAlgorithmUseCase(algorithmRepo);
+  const updateAlgorithmUseCase = new UpdateAlgorithmUseCase(algorithmRepo);
+  const deleteAlgorithmUseCase = new DeleteAlgorithmUseCase(algorithmRepo);
+  const listAlgorithmsUseCase = new ListAlgorithmsUseCase(algorithmRepo);
+  const createStepUseCase = new CreateStepUseCase(algorithmRepo);
+  const addStepToAlgorithmUseCase = new AddStepToAlgorithmUseCase(algorithmRepo);
+  const removeStepFromAlgorithmUseCase = new RemoveStepFromAlgorithmUseCase(algorithmRepo);
+  const getAlgorithmStepsUseCase = new GetAlgorithmStepsUseCase(algorithmRepo);
+
+  // Initialize controllers
+  const conceptController = new ConceptController(
+    createConceptUseCase,
+    getConceptUseCase,
+    updateConceptUseCase,
+    deleteConceptUseCase,
+    listConceptsUseCase,
+    addChildConceptUseCase,
+    removeChildConceptUseCase
+  );
+
+  const sentenceController = new SentenceController(
+    createSentenceUseCase,
+    getSentenceUseCase,
+    updateSentenceUseCase,
+    deleteSentenceUseCase,
+    listSentencesUseCase,
+    linkSentenceConceptUseCase,
+    unlinkSentenceConceptUseCase
+  );
+
+  const algorithmController = new AlgorithmController(
+    createAlgorithmUseCase,
+    getAlgorithmUseCase,
+    updateAlgorithmUseCase,
+    deleteAlgorithmUseCase,
+    listAlgorithmsUseCase,
+    createStepUseCase,
+    addStepToAlgorithmUseCase,
+    removeStepFromAlgorithmUseCase,
+    getAlgorithmStepsUseCase
+  );
+
+  // Create routers
+  const conceptRouter = createConceptRouter(conceptController);
+  const sentenceRouter = createSentenceRouter(sentenceController);
+  const algorithmRouter = createAlgorithmRouter(algorithmController);
 
   const app = express();
   app.use(express.json());
-  app.use(doubleRouter);
 
-  return { app, shutdown: () => { engine.shutdown(); } };
+  // Register routes under /api prefix
+  app.use("/api", conceptRouter);
+  app.use("/api", sentenceRouter);
+  app.use("/api", algorithmRouter);
+
+  return {
+    app,
+    shutdown: async () => {
+      await closeConnection();
+    },
+  };
 }
 
 const isMain =
@@ -27,16 +157,40 @@ if (isMain) {
   const { app, shutdown } = buildApp();
   const port = Number(process.env.PORT ?? 3001);
   const host = process.env.HOST ?? "0.0.0.0";
+  const runMigrationsOnStartup = process.env.RUN_MIGRATIONS !== "false";
 
-  const server = app.listen(port, host, () => {
-    console.log(`Server listening on ${host}:${String(port)}`);
-  });
+  // Initialize database connection and run migrations before starting server
+  initializeDatabase()
+    .then(async () => {
+      // Run migrations in development mode or when explicitly enabled
+      if (runMigrationsOnStartup) {
+        try {
+          await runMigrations(db);
+        } catch (error) {
+          console.error("Migration failed:", error);
+          throw error;
+        }
+      }
 
-  const onSignal = (): void => {
-    shutdown();
-    server.close();
-  };
+      const server = app.listen(port, host, () => {
+        console.log(`Server listening on ${host}:${String(port)}`);
+      });
 
-  process.on("SIGTERM", onSignal);
-  process.on("SIGINT", onSignal);
+      const onSignal = (): void => {
+        console.log("Shutting down gracefully...");
+        void (async (): Promise<void> => {
+          await shutdown();
+          server.close(() => {
+            console.log("Server closed");
+          });
+        })();
+      };
+
+      process.on("SIGTERM", onSignal);
+      process.on("SIGINT", onSignal);
+    })
+    .catch((error: unknown) => {
+      console.error("Failed to start server:", error);
+      throw error;
+    });
 }

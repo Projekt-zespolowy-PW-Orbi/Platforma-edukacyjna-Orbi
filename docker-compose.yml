@@ -1,0 +1,30 @@
+services:
+  mariadb:
+    image: mariadb:11.4
+    container_name: orbi-mariadb
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_secret}
+      MYSQL_DATABASE: ${DB_NAME:-orbi_dev}
+      MYSQL_USER: ${DB_USER:-orbi}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-orbi_secret}
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - orbi-network
+
+volumes:
+  mariadb_data:
+    driver: local
+
+networks:
+  orbi-network:
+    driver: bridge
