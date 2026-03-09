@@ -19,11 +19,18 @@ Thumbs.db
 # C++ build artifacts
 *.o
 *.obj
-*.exe
 *.out
 *.pdb
+*.exe
 
 # Environment
 .env
 .env.local
 .env.*.local
+
+plans/
+
+# exceptions for EXE in packages/engine/tools
+!packages/engine/tools/
+!packages/engine/tools/**/
+!packages/engine/tools/**/*.exe

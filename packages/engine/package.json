@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "cmake --build build -j",
-    "prebuild": "cmake -S . -B build -G Ninja",
+    "prebuild": "cmake -S . -B build -G Ninja -DCMAKE_MAKE_PROGRAM=%cd%/tools/ninja.exe",
     "test": "vitest run",
     "dev": "pnpm build"
   },
