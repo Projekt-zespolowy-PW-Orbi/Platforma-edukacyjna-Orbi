@@ -208,6 +208,23 @@ describe("orbi-engine simplify", () => {
         { name: "mixed number addition", input: "1 + 1/2 + 1/4", expected: { kind: "fraction", numerator: 7, denominator: 4 } },
       ],
     },
+    {
+      name: "unary minus and product regressions",
+      idPrefix: "unary",
+      cases: [
+        { name: "grouped unary minus on integers", input: "-(2+3)", expected: { kind: "number", value: -5 } },
+        { name: "double grouped unary minus stays negative", input: "-((2+3))", expected: { kind: "number", value: -5 } },
+        { name: "grouped unary minus on symbolic sum", input: "-(x+1)", expected: { kind: "raw", contains: ["-1", "x", "1"] } },
+        { name: "unary minus precedence differs from parenthesized base", input: "-2^2", expected: { kind: "number", value: -4 } },
+        { name: "parenthesized negative base exponent", input: "(-2)^2", expected: { kind: "number", value: 4 } },
+        { name: "unary minus in denominator from grouped sum", input: "1/-(2+3)", expected: { kind: "fraction", numerator: -1, denominator: 5 } },
+        { name: "signed product with explicit parentheses", input: "(-2)*(-3)", expected: { kind: "number", value: 6 } },
+        { name: "signed symbolic product keeps both variables", input: "(-x)*(-y)", expected: { kind: "product", requiredTokens: ["x", "y"] } },
+        { name: "denominator normalization can reduce to integer", input: "2/-2", expected: { kind: "number", value: -1 } },
+        { name: "same-base exponent and variable merge", input: "x^2 * x", expected: { kind: "exponential", base: "x", power: 3 } },
+        { name: "same-base exponent product merge", input: "x^2 * x^3", expected: { kind: "exponential", base: "x", power: 5 } },
+      ],
+    },
   ];
 
   for (const suite of simplifySuites) {
