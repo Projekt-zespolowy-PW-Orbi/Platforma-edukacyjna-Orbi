@@ -9,6 +9,8 @@ namespace math {
 	class Step_container {
 		std::vector<math::Step> steps;
 		public:
-			void push_back(Step step);
+			void push_back(const Step& step);
+			const std::vector<math::Step>& get_steps() const;
+			bool empty() const;
 	};
 }

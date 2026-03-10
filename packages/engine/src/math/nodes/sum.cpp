@@ -6,6 +6,7 @@
 
 #include "../common.hpp"
 #include "../function.hpp"
+#include "../memory/step_container.hpp"
 
 #include "number.hpp"
 #include "variable.hpp"
@@ -73,7 +74,7 @@ namespace math
 		}
 	}
 
-	Function* Sum::simplify()
+	Function* Sum::simplify(Step_container* steps)
 	{
 		int constant = 0;
 		std::vector<Function*> new_components;
@@ -108,7 +109,14 @@ namespace math
 		};
 
 		for(Function* component : this->components) {
-			Function* simplified = component->simplify();
+			std::string source = component->to_string();
+			Function* simplified = component->simplify(steps);
+			std::string result = simplified->to_string();
+
+			if(steps != nullptr && source != result) {
+				steps->push_back(Step(source, result));
+			}
+
 			collect_component(simplified);
 		}
 

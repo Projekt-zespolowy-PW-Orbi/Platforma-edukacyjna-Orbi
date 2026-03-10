@@ -6,6 +6,8 @@
 
 namespace math
 {
+	class Step_container;
+
 	enum class PrintMethod {
 		JSON,
 		STRING
@@ -22,7 +24,8 @@ namespace math
 		virtual ~Function() = default;
 		virtual void print_json(std::ostream& os, int depth = 0) const;
 		virtual void print_tex(std::ostream& os) const = 0;
-		virtual Function* simplify() = 0;
+		virtual Function* simplify(Step_container* steps = nullptr) = 0;
 		virtual Type get_type() = 0;
+		std::string to_string() const;
 	};
 }

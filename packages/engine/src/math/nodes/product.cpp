@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include "../common.hpp"
+#include "../memory/step_container.hpp"
 
 #include "number.hpp"
 #include "variable.hpp"
@@ -67,27 +68,35 @@ namespace math
 		}
 	}
 
-	Function* Product::simplify()
+	Function* Product::simplify(Step_container* steps)
 	{
 		int constant = 1;
 		std::map<std::string, int> powers;
 		std::vector<Function*> new_products;
 
 		for(auto p : products) {
-			switch(p->get_type()) {
+			std::string source = p->to_string();
+			Function* simplified = p->simplify(steps);
+			std::string result = simplified->to_string();
+
+			if(steps != nullptr && source != result) {
+				steps->push_back(Step(source, result));
+			}
+
+			switch(simplified->get_type()) {
 				case Type::Number:
-					constant *= static_cast<Number*>(p)->number;
+					constant *= static_cast<Number*>(simplified)->number;
 					break;
 
 				case Type::Variable: {
-					Variable* var = static_cast<Variable*>(p);
+					Variable* var = static_cast<Variable*>(simplified);
 					constant *= var->number;
 					powers[var->name]++;
 					break;
 				}
 
 				default:
-					new_products.push_back(p);
+					new_products.push_back(simplified);
 					break;
 			}
 		}

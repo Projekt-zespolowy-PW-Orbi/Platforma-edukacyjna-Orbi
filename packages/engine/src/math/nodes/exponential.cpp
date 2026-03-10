@@ -70,8 +70,9 @@ namespace math
 		else os << "{" << this->power << "}";
 	}
 
-	Function* Exponential::simplify()
+	Function* Exponential::simplify(Step_container* steps)
 	{
+		(void)steps;
 		return this;
 	}
 }

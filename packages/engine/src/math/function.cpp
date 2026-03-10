@@ -1,9 +1,10 @@
 #include "function.hpp"
 
 #include <algorithm>
+#include <sstream>
+#include <cxxabi.h>
 #include <typeinfo>
 #include <vector>
-#include <cxxabi.h>
 
 #include "common.hpp"
 #include "parser.hpp"
@@ -84,6 +85,13 @@ namespace math
 	{
 		while(depth--) os << '\t';
 		os << '"' <<abi::__cxa_demangle(typeid(*this).name(), 0, 0, 0) << '"' << ":\n";
+	}
+
+	std::string Function::to_string() const
+	{
+		std::ostringstream os;
+		print_tex(os);
+		return os.str();
 	}
 
 	std::ostream &operator<<(std::ostream &os, const Function &s)

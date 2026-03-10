@@ -4,6 +4,7 @@
 #include <numeric>
 
 #include "../common.hpp"
+#include "../memory/step_container.hpp"
 
 #include "number.hpp"
 #include "product.hpp"
@@ -65,9 +66,16 @@ namespace math
 		delete this->denumerator;
 	}
 
-	void simplify_child(Function*& node)
+	void simplify_child(Function*& node, Step_container* steps)
 	{
-		Function* simplified = node->simplify();
+		std::string source = node->to_string();
+		Function* simplified = node->simplify(steps);
+		std::string result = simplified->to_string();
+
+		if(steps != nullptr && source != result) {
+			steps->push_back(Step(source, result));
+		}
+
 		if(simplified != node) {
 			delete node;
 			node = simplified;
@@ -153,7 +161,7 @@ namespace math
 
 		multiply_numerator_by(factor);
 
-		simplify_child(this->numerator);
+		simplify_child(this->numerator, nullptr);
 
 		delete this->denumerator;
 		this->denumerator = new Number(common_denominator);
@@ -209,10 +217,10 @@ namespace math
 		os << "}";
 	}
 
-	Function* Fraction::simplify()
+	Function* Fraction::simplify(Step_container* steps)
 	{
-		simplify_child(this->numerator);
-		simplify_child(this->denumerator);
+		simplify_child(this->numerator, steps);
+		simplify_child(this->denumerator, steps);
 		
 		Function* reduced = reduce();
 		if(reduced != this) {
