@@ -27,12 +27,23 @@ std::string math::Step_container::to_json() const
 	std::ostringstream json;
 	json << "[";
 
-	for(std::size_t i = 0; i < steps.size(); ++i) {
-		if(i != 0) {
-			json << ",";
-		}
+	if(!steps.empty()) {
+		json << "\n";
+		for(std::size_t i = 0; i < steps.size(); ++i) {
+			if(i != 0) {
+				json << ",\n";
+			}
 
-		json << steps[i].to_json();
+			std::string step_json = steps[i].to_json();
+			json << '\t';
+			for(char c : step_json) {
+				json << c;
+				if(c == '\n') {
+					json << '\t';
+				}
+			}
+		}
+		json << "\n";
 	}
 
 	json << "]";
