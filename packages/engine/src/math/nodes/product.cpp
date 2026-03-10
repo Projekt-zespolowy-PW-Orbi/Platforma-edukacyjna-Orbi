@@ -2,9 +2,9 @@
 
 #include <map>
 #include <sstream>
+#include <utility>
 
 #include "../common.hpp"
-#include "../memory/step_container.hpp"
 
 #include "number.hpp"
 #include "variable.hpp"
@@ -68,68 +68,77 @@ namespace math
 		}
 	}
 
-	Function* Product::simplify(Step_container* steps)
+	SimplifyResult Product::simplify()
 	{
+		std::string source = this->to_string();
 		int constant = 1;
 		std::map<std::string, int> powers;
 		std::vector<Function*> new_products;
+		Step step(source, source);
 
 		for(auto p : products) {
-			std::string source = p->to_string();
-			Function* simplified = p->simplify(steps);
-			std::string result = simplified->to_string();
-
-			if(steps != nullptr && source != result) {
-				steps->push_back(Step(source, result));
+			SimplifyResult simplified = p->simplify();
+			if(simplified.step.HasDetails()) {
+				step.AddChild(std::move(simplified.step));
 			}
 
-			switch(simplified->get_type()) {
+			switch(simplified.function->get_type()) {
 				case Type::Number:
-					constant *= static_cast<Number*>(simplified)->number;
+					constant *= static_cast<Number*>(simplified.function)->number;
 					break;
 
 				case Type::Variable: {
-					Variable* var = static_cast<Variable*>(simplified);
+					Variable* var = static_cast<Variable*>(simplified.function);
 					constant *= var->number;
 					powers[var->name]++;
 					break;
 				}
 
 				default:
-					new_products.push_back(simplified);
+					new_products.push_back(simplified.function);
 					break;
 			}
 		}
 
+		Function* result = nullptr;
 		if(new_products.size() == 0) {
 			if(powers.size() == 1) {
 				if(powers.begin()->second == 1) {
-					return new Variable(powers.begin()->first, constant);
+					result = new Variable(powers.begin()->first, constant);
 				}
 				else {
-					return new Exponential(
+					result = new Exponential(
 						new Variable(powers.begin()->first, 1),
 						new Number(powers.begin()->second)
 					);
 				}
 			}
 			else if(powers.size() == 0) {
-				return new Number(constant);
+				result = new Number(constant);
 			}
 		}
 
-		new_products.push_back(new Number(constant));
+		if(result == nullptr) {
+			new_products.push_back(new Number(constant));
 
-		for(auto p : powers) {
-			if(p.second == 1)
-				new_products.push_back(new Variable(p.first, 1));
-			else
-				new_products.push_back(new Exponential(
-					new Variable(p.first, 1),
-					new Number(p.second)
-				));
+			for(auto p : powers) {
+				if(p.second == 1)
+					new_products.push_back(new Variable(p.first, 1));
+				else
+					new_products.push_back(new Exponential(
+						new Variable(p.first, 1),
+						new Number(p.second)
+					));
+			}
+
+			result = new Product(new_products);
 		}
 
-		return new Product(new_products);
+		Step final_step(source, result->to_string());
+		for(const Step& child : step.GetChildren()) {
+			final_step.AddChild(child);
+		}
+
+		return SimplifyResult(result, std::move(final_step));
 	}
 }

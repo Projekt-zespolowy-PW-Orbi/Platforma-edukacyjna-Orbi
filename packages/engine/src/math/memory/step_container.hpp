@@ -10,7 +10,9 @@ namespace math {
 		std::vector<math::Step> steps;
 		public:
 			void push_back(const Step& step);
+			void push_back(Step&& step);
 			const std::vector<math::Step>& get_steps() const;
 			bool empty() const;
+			std::string to_json() const;
 	};
 }

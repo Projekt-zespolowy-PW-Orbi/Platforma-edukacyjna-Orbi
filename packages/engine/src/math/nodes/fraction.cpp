@@ -2,9 +2,9 @@
 
 #include <sstream>
 #include <numeric>
+#include <utility>
 
 #include "../common.hpp"
-#include "../memory/step_container.hpp"
 
 #include "number.hpp"
 #include "product.hpp"
@@ -66,20 +66,17 @@ namespace math
 		delete this->denumerator;
 	}
 
-	void simplify_child(Function*& node, Step_container* steps)
+	Step simplify_child(Function*& node)
 	{
-		std::string source = node->to_string();
-		Function* simplified = node->simplify(steps);
-		std::string result = simplified->to_string();
+		SimplifyResult simplified = node->simplify();
+		Step step = std::move(simplified.step);
 
-		if(steps != nullptr && source != result) {
-			steps->push_back(Step(source, result));
-		}
-
-		if(simplified != node) {
+		if(simplified.function != node) {
 			delete node;
-			node = simplified;
+			node = simplified.function;
 		}
+
+		return step;
 	}
 
 	void Fraction::multiply_numerator_by(int factor)
@@ -161,7 +158,7 @@ namespace math
 
 		multiply_numerator_by(factor);
 
-		simplify_child(this->numerator, nullptr);
+		simplify_child(this->numerator);
 
 		delete this->denumerator;
 		this->denumerator = new Number(common_denominator);
@@ -217,10 +214,20 @@ namespace math
 		os << "}";
 	}
 
-	Function* Fraction::simplify(Step_container* steps)
+	SimplifyResult Fraction::simplify()
 	{
-		simplify_child(this->numerator, steps);
-		simplify_child(this->denumerator, steps);
+		std::string source = this->to_string();
+		Step step(source, source);
+
+		Step numerator_step = simplify_child(this->numerator);
+		if(numerator_step.HasDetails()) {
+			step.AddChild(std::move(numerator_step));
+		}
+
+		Step denumerator_step = simplify_child(this->denumerator);
+		if(denumerator_step.HasDetails()) {
+			step.AddChild(std::move(denumerator_step));
+		}
 		
 		Function* reduced = reduce();
 		if(reduced != this) {
@@ -229,6 +236,11 @@ namespace math
 			delete this;
 		}
 
-		return reduced;
+		Step final_step(source, reduced->to_string());
+		for(const Step& child : step.GetChildren()) {
+			final_step.AddChild(child);
+		}
+
+		return SimplifyResult(reduced, std::move(final_step));
 	}
 }

@@ -3,10 +3,10 @@
 #include <map>
 #include <sstream>
 #include <functional>
+#include <utility>
 
 #include "../common.hpp"
 #include "../function.hpp"
-#include "../memory/step_container.hpp"
 
 #include "number.hpp"
 #include "variable.hpp"
@@ -74,12 +74,14 @@ namespace math
 		}
 	}
 
-	Function* Sum::simplify(Step_container* steps)
+	SimplifyResult Sum::simplify()
 	{
+		std::string source = this->to_string();
 		int constant = 0;
 		std::vector<Function*> new_components;
 		std::vector<Fraction*> fractions;
 		std::map<std::string, int> variables_sum;
+		Step step(source, source);
 
 		std::function<void(Function*)> collect_component = [&](Function* node)
 		{
@@ -109,15 +111,11 @@ namespace math
 		};
 
 		for(Function* component : this->components) {
-			std::string source = component->to_string();
-			Function* simplified = component->simplify(steps);
-			std::string result = simplified->to_string();
-
-			if(steps != nullptr && source != result) {
-				steps->push_back(Step(source, result));
+			SimplifyResult simplified = component->simplify();
+			if(simplified.step.HasDetails()) {
+				step.AddChild(std::move(simplified.step));
 			}
-
-			collect_component(simplified);
+			collect_component(simplified.function);
 		}
 
 		if(!fractions.empty() && constant != 0) {
@@ -158,10 +156,18 @@ namespace math
 			}));
 		}
 
+		Function* result = nullptr;
 		if(new_components.size() == 1) {
-			return new_components[0];
+			result = new_components[0];
+		}
+		else {
+			result = new Sum(new_components);
 		}
 
-		return new Sum(new_components);
+		Step final_step(source, result->to_string());
+		for(const Step& child : step.GetChildren()) {
+			final_step.AddChild(child);
+		}
+		return SimplifyResult(result, std::move(final_step));
 	}
 }

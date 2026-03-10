@@ -71,7 +71,8 @@ int json_mode() {
 			{
 				x = math::Parser::fix_brackets(x);
 				math::Function* t = math::Function::convert(x);
-				t = t->simplify();
+				math::SimplifyResult simplified = t->simplify();
+				t = simplified.function;
 				std::cout << "{\"id\":\"" << id << "\",\"ok\":true,\"result\":\"" << *t << "\"}" << std::endl;
 			}
 		},
@@ -119,7 +120,9 @@ int parser_mode() {
 		math::Function* t = math::Function::convert(input);
 		ss << "Basic:" << std::endl << *t << std::endl;
 		math::erase_comma_if_last(ss);
-		t = t->simplify();
+		math::SimplifyResult simplified = t->simplify();
+		ss << simplified.step.to_json() << std::endl;
+		t = simplified.function;
 		ss << "Simplified:" << std::endl << *t;
 		math::erase_comma_if_last(ss);
 		std::cout << ss.str() << std::endl;

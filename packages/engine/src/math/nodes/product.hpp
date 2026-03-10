@@ -16,7 +16,7 @@ namespace math
 
 		virtual void print_json(std::ostream& os, int depth = 0) const override;
 		virtual void print_tex(std::ostream& os) const override;
-		virtual Function* simplify(Step_container* steps = nullptr) override;
+		virtual SimplifyResult simplify() override;
 		Type get_type() override { return Type::Product; }
 	};
 }
