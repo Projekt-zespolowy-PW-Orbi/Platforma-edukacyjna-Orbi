@@ -209,6 +209,7 @@ describe("orbi-engine simplify", () => {
       ],
     },
     {
+      // group of edge cases that are currently not handled correctly but are important to prevent regressions on as we continue to develop the engine
       name: "unary minus and product regressions",
       idPrefix: "unary",
       cases: [
