@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   expectResultToMatch,
   sendRequest,
+  type EngineResponse,
   type ExpectedSimplifyResult,
 } from "./helpers/engine-test-utils.js";
 
@@ -9,6 +10,7 @@ type SimplifyCase = {
   name: string;
   input: string;
   expected: ExpectedSimplifyResult;
+  skip?: boolean;
 };
 
 function runSimplifyCaseGroup(
@@ -16,7 +18,8 @@ function runSimplifyCaseGroup(
   cases: SimplifyCase[],
 ): void {
   for (const [index, testCase] of cases.entries()) {
-    it(testCase.name, async () => {
+    const runner = testCase.skip ? it.skip : it;
+    runner(testCase.name, async () => {
       const id = `${idPrefix}-${index + 1}`;
       const res = await sendRequest({ id, op: "simplify", x: testCase.input });
       expect(res.id).toBe(id);
@@ -59,7 +62,7 @@ describe("orbi-engine fraction common-denominator and shared-sum edges", () => {
     { name: "reduces after denominator scaling", input: "2/7 + 3/14", expected: { kind: "fraction", numerator: 1, denominator: 2 } },
     { name: "handles parenthesized numerator in sum", input: "(1 + 2)/3 + 1/6", expected: { kind: "fraction", numerator: 7, denominator: 6 } },
     { name: "sums shared denominators into whole number", input: "3/8 + 1/8 + 4/8", expected: { kind: "number", value: 1 } },
-    { name: "locks current handling for parenthesized negative numerator term", input: "5/12 + (-2)/12", expected: { kind: "fraction", numerator: 5, denominator: 12 } },
+    { name: "[BUG] parenthesized negative numerator should sum correctly", input: "5/12 + (-2)/12", expected: { kind: "fraction", numerator: 1, denominator: 4 }, skip: true },
     {
       name: "keeps symbolic numerator structure over shared denominator",
       input: "x/5 + 2/5",
@@ -107,7 +110,7 @@ describe("orbi-engine exponential simplify", () => {
     { name: "simplifies power of one to base", input: "x^1", expected: { kind: "exponential", base: "x", power: 1 } },
     { name: "simplifies power of zero", input: "x^0", expected: { kind: "exponential", base: "x", power: 0 } },
     { name: "handles parenthesized base", input: "(2+3)^2", expected: { kind: "exponential", base: "5", power: 2 } },
-    { name: "documents current negative exponent parsing behavior", input: "x^(-2)", expected: { kind: "exponential", base: "x", power: 0 } },
+    { name: "[BUG] negative exponent should parse correctly", input: "x^(-2)", expected: { kind: "exponential", base: "x", power: -2 }, skip: true },
     { name: "handles fractional base", input: "(1/2)^2", expected: { kind: "raw", contains: ["math::Exponential", "math::Fraction"] } },
   ];
 
@@ -153,7 +156,7 @@ describe("orbi-engine product simplify", () => {
     { name: "handles multiplication by zero", input: "999 * 0", expected: { kind: "number", value: 0 } },
     { name: "handles multiplication by one", input: "42 * 1", expected: { kind: "number", value: 42 } },
     { name: "handles negative multiplier", input: "-2 * 3", expected: { kind: "number", value: -6 } },
-    { name: "documents double negative product representation", input: "-2 * -3", expected: { kind: "raw", contains: ["math::Product", "-1", "5"] } },
+    { name: "[BUG] double negative product should simplify to positive", input: "-2 * -3", expected: { kind: "number", value: 6 }, skip: true },
     { name: "multiplies variable by integer", input: "3 * x", expected: { kind: "variable", name: "x", coefficient: 3 } },
     { name: "multiplies multiple variables of same name", input: "x * x * x", expected: { kind: "exponential", base: "x", power: 3 } },
     { name: "multiplies different variables", input: "x * y", expected: { kind: "product", requiredTokens: ["x", "y"] } },
@@ -186,7 +189,7 @@ describe("orbi-engine complex algebraic expressions", () => {
     { name: "nested expression with fraction and variable", input: "(x + 1)/2", expected: { kind: "fractionShape", requiredTokens: ["x", "1", "2"] } },
     { name: "variable times fraction", input: "x * (1/2)", expected: { kind: "fractionShape", requiredTokens: ["x", "2"] } },
     { name: "fraction with variable denominator", input: "(x + y)/z", expected: { kind: "fractionShape", requiredTokens: ["x", "y", "z"] } },
-    { name: "documents triple-nested parentheses parsing issue", input: "(((1 + 2)))", expected: { kind: "number", value: 0 } },
+    { name: "[BUG] triple-nested parentheses should evaluate correctly", input: "(((1 + 2)))", expected: { kind: "number", value: 3 }, skip: true },
     { name: "expression with whitespace", input: " 1  +  2  ", expected: { kind: "number", value: 3 } },
     { name: "large integer computation", input: "100 * 100", expected: { kind: "number", value: 10000 } },
     { name: "fraction chain simplification", input: "1/2 * 2/3 * 3/4 * 4/5", expected: { kind: "fraction", numerator: 1, denominator: 5 } },

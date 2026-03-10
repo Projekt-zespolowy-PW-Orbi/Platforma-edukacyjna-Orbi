@@ -76,11 +76,30 @@ function extractSingleFractionPair(result: string): {
   return null;
 }
 
+const ENGINE_TIMEOUT_MS = 5_000;
+
 export function sendRequest(input: object): Promise<EngineResponse> {
   return new Promise((resolveRequest, rejectRequest) => {
     const proc = spawn(enginePath);
     let stdout = "";
     let stderr = "";
+    let settled = false;
+
+    const timeout = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        proc.kill();
+        rejectRequest(new Error(`Engine timed out after ${ENGINE_TIMEOUT_MS}ms`));
+      }
+    }, ENGINE_TIMEOUT_MS);
+
+    proc.on("error", (err) => {
+      if (!settled) {
+        settled = true;
+        clearTimeout(timeout);
+        rejectRequest(new Error(`Failed to spawn engine: ${err.message}`));
+      }
+    });
 
     proc.stdout.on("data", (data: Buffer) => {
       stdout += data.toString();
@@ -89,6 +108,10 @@ export function sendRequest(input: object): Promise<EngineResponse> {
       stderr += data.toString();
     });
     proc.on("close", () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+
       if (stderr.trim().length > 0) {
         rejectRequest(new Error(`stderr: ${stderr}`));
         return;
@@ -119,95 +142,89 @@ export function expectResultToMatch(
   expect(response.ok).toBe(true);
   expect(typeof response.result).toBe("string");
   const result = response.result as string;
-  const expectedLabel = expected.kind === "number"
-    ? String(expected.value)
-    : expected.kind === "fraction"
-      ? `${String(expected.numerator)}/${String(expected.denominator)}`
-      : expected.kind;
-  console.log(`[engine-test] expected: ${expectedLabel}, actual: ${result}`);
 
-  if (expected.kind === "number") {
-    const numericResult = Number(result);
-    expect(Number.isNaN(numericResult)).toBe(false);
-    expect(numericResult).toBe(expected.value);
-    return;
-  }
-
-  if (expected.kind === "fraction") {
-    const pair = extractSingleFractionPair(result);
-    expect(pair).not.toBeNull();
-    expect(pair?.numerator).toBe(expected.numerator);
-    expect(pair?.denominator).toBe(expected.denominator);
-    return;
-  }
-
-  if (expected.kind === "fractionShape") {
-    expect(result).toContain("\"math::Fraction\":");
-    for (const token of expected.requiredTokens) {
-      expect(result).toContain(token);
+  switch (expected.kind) {
+    case "number": {
+      const numericResult = Number(result);
+      expect(Number.isNaN(numericResult)).toBe(false);
+      expect(numericResult).toBe(expected.value);
+      return;
     }
-    if (expected.denominator !== undefined) {
-      const pairs = extractNumericFractionPairs(result);
-      const hasExpectedDenominator = pairs.some(
-        (pair) => pair.denominator === expected.denominator,
-      );
-      expect(hasExpectedDenominator).toBe(true);
+    case "fraction": {
+      const pair = extractSingleFractionPair(result);
+      expect(pair).not.toBeNull();
+      expect(pair?.numerator).toBe(expected.numerator);
+      expect(pair?.denominator).toBe(expected.denominator);
+      return;
     }
-    return;
-  }
-
-  if (expected.kind === "variable") {
-    const extracted = extractVariable(result);
-    expect(extracted).not.toBeNull();
-    expect(extracted?.name).toBe(expected.name);
-    if (expected.coefficient !== undefined) {
-      expect(extracted?.coefficient).toBe(expected.coefficient);
+    case "fractionShape": {
+      expect(result).toContain("\"math::Fraction\":");
+      for (const token of expected.requiredTokens) {
+        expect(result).toContain(token);
+      }
+      if (expected.denominator !== undefined) {
+        const pairs = extractNumericFractionPairs(result);
+        const hasExpectedDenominator = pairs.some(
+          (pair) => pair.denominator === expected.denominator,
+        );
+        expect(hasExpectedDenominator).toBe(true);
+      }
+      return;
     }
-    return;
-  }
-
-  if (expected.kind === "exponential") {
-    expect(result).toContain("\"math::Exponential\":");
-    expect(result).toContain(expected.base);
-    expect(result).toContain(String(expected.power));
-    return;
-  }
-
-  if (expected.kind === "sum") {
-    expect(result).toContain("\"math::Sum\":");
-    for (const token of expected.requiredTokens) {
-      expect(result).toContain(token);
+    case "nestedFraction": {
+      const fractionMatches = result.match(/"math::Fraction":/g) ?? [];
+      expect(fractionMatches).toHaveLength(expected.fractionCount);
+      for (const token of expected.requiredTokens ?? []) {
+        expect(result).toContain(token);
+      }
+      return;
     }
-    return;
-  }
-
-  if (expected.kind === "product") {
-    expect(result).toContain("\"math::Product\":");
-    for (const token of expected.requiredTokens) {
-      expect(result).toContain(token);
+    case "variable": {
+      const extracted = extractVariable(result);
+      expect(extracted).not.toBeNull();
+      expect(extracted?.name).toBe(expected.name);
+      if (expected.coefficient !== undefined) {
+        expect(extracted?.coefficient).toBe(expected.coefficient);
+      }
+      return;
     }
-    return;
-  }
-
-  if (expected.kind === "raw") {
-    for (const token of expected.contains) {
-      expect(result).toContain(token);
+    case "exponential": {
+      expect(result).toContain("\"math::Exponential\":");
+      expect(result).toContain(expected.base);
+      expect(result).toContain(String(expected.power));
+      return;
     }
-    for (const token of expected.notContains ?? []) {
-      expect(result).not.toContain(token);
+    case "sum": {
+      expect(result).toContain("\"math::Sum\":");
+      for (const token of expected.requiredTokens) {
+        expect(result).toContain(token);
+      }
+      return;
     }
-    return;
-  }
-
-  const fractionMatches = result.match(/"math::Fraction":/g) ?? [];
-  expect(fractionMatches).toHaveLength(expected.fractionCount);
-  for (const token of expected.requiredTokens ?? []) {
-    expect(result).toContain(token);
+    case "product": {
+      expect(result).toContain("\"math::Product\":");
+      for (const token of expected.requiredTokens) {
+        expect(result).toContain(token);
+      }
+      return;
+    }
+    case "raw": {
+      for (const token of expected.contains) {
+        expect(result).toContain(token);
+      }
+      for (const token of expected.notContains ?? []) {
+        expect(result).not.toContain(token);
+      }
+      return;
+    }
+    default: {
+      const _exhaustive: never = expected;
+      throw new Error(`Unhandled expected kind: ${(_exhaustive as ExpectedSimplifyResult).kind}`);
+    }
   }
 }
 
 function extractVariable(result: string): { name: string; coefficient: number } | null {
-  // Match patterns like "2x," or "x," or "-x," or "-2x,"
   const match = result.match(/^\s*(-?\d*)([a-zA-Z]+),?\s*$/m);
   if (match !== null) {
     const coefStr = match[1];
@@ -218,34 +235,4 @@ function extractVariable(result: string): { name: string; coefficient: number } 
     return { name, coefficient };
   }
   return null;
-}
-
-export function expectResultToMatchVariable(
-  response: EngineResponse,
-  expectedName: string,
-  expectedCoefficient: number = 1,
-): void {
-  expect(response.ok).toBe(true);
-  expect(typeof response.result).toBe("string");
-  const result = response.result as string;
-  const extracted = extractVariable(result);
-  expect(extracted).not.toBeNull();
-  expect(extracted?.name).toBe(expectedName);
-  expect(extracted?.coefficient).toBe(expectedCoefficient);
-}
-
-export function expectResultToContain(
-  response: EngineResponse,
-  requiredTokens: string[],
-  forbiddenTokens: string[] = [],
-): void {
-  expect(response.ok).toBe(true);
-  expect(typeof response.result).toBe("string");
-  const result = response.result as string;
-  for (const token of requiredTokens) {
-    expect(result).toContain(token);
-  }
-  for (const token of forbiddenTokens) {
-    expect(result).not.toContain(token);
-  }
 }
