@@ -51,18 +51,26 @@ namespace math
 		this->components = components;
 	}
 
-	void Sum::print(std::ostream &os, int depth) const
+	void Sum::print_json(std::ostream &os, int depth) const
 	{
 		std::stringstream ss;
-		Function::print(ss, depth);
+		Function::print_json(ss, depth);
 		print_tabs(ss, depth);
 		ss << "{\n";
-		for(auto f : this->components) f->print(ss, depth + 1);
+		for(auto f : this->components) f->print_json(ss, depth + 1);
 		erase_comma_if_last(ss);
 		print_tabs(ss, depth);
 		ss << "},\n";
 		os << ss.str();
 
+	}
+
+	void Sum::print_tex(std::ostream &os) const
+	{
+		for(int i = 0; i < this->components.size(); i++) {
+			os << *components[i];
+			if(i != this->components.size() - 1) os << " + ";
+		}
 	}
 
 	Function* Sum::simplify()

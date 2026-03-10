@@ -39,12 +39,18 @@ namespace math
 
 	Variable::Variable(std::string name, int number) : number(number), name(name) {}
 
-	void Variable::print(std::ostream &os, int depth) const
+	void Variable::print_json(std::ostream &os, int depth) const
 	{
 		while(depth--) os << '\t';
 
 		if(this->number == 1) os << this->name << "," << std::endl;
 		else if(this->number == -1) os << "-" << this->name << "," << std::endl;
 		else os << this->number << this->name << "," << std::endl;
+	}
+	void Variable::print_tex(std::ostream &os) const
+	{
+		if(this->number == 1) os << this->name;
+		else if(this->number == -1) os << "-" << this->name;
+		else os << this->number << this->name;
 	}
 }

@@ -48,18 +48,26 @@ namespace math
 		if(this->base == nullptr) this->base = new Number(0);
 	}
 
-	void Exponential::print(std::ostream &os, int depth) const
+	void Exponential::print_json(std::ostream &os, int depth) const
 	{
 		std::stringstream ss;	
-		Function::print(ss, depth);
+		Function::print_json(ss, depth);
 		print_tabs(ss, depth);
 		ss << "{\n";
-		this->base->print(ss, depth + 1);
-		this->power->print(ss, depth + 1);
+		this->base->print_json(ss, depth + 1);
+		this->power->print_json(ss, depth + 1);
 		erase_comma_if_last(ss);
 		print_tabs(ss, depth);
 		ss << "},\n";
 		os << ss.str();
+	}
+
+	void Exponential::print_tex(std::ostream &os) const
+	{
+		os << this->base << "^";
+		Type type = this->power->get_type();
+		if(type == Type::Variable || type == Type::Number) os << this->power;
+		else os << "{" << this->power << "}";
 	}
 
 	Function* Exponential::simplify()

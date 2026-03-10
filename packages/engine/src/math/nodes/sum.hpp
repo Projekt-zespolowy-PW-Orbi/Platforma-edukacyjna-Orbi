@@ -14,7 +14,8 @@ namespace math
 		Sum(std::string sum);
 		Sum(std::vector<Function*> components) : components(components) {}
 
-		virtual void print(std::ostream& os, int depth = 0) const override;
+		virtual void print_json(std::ostream& os, int depth = 0) const override;
+		virtual void print_tex(std::ostream& os) const override;
 		virtual Function* simplify() override;
 		Type get_type() override { return Type::Sum; }
 	};

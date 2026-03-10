@@ -185,18 +185,28 @@ namespace math
 		return true;
 	}
 
-	void Fraction::print(std::ostream &os, int depth) const
+	void Fraction::print_json(std::ostream &os, int depth) const
 	{
 		std::stringstream ss;
-		Function::print(ss, depth);
+		Function::print_json(ss, depth);
 		print_tabs(ss, depth);
 		ss << "{\n";
-		this->numerator->print(ss, depth + 1);
-		this->denumerator->print(ss, depth + 1);
+		this->numerator->print_json(ss, depth + 1);
+		this->denumerator->print_json(ss, depth + 1);
 		erase_comma_if_last(ss);
 		print_tabs(ss, depth);
 		ss << "},\n";
 		os << ss.str();
+	}
+
+	void Fraction::print_tex(std::ostream &os) const
+	{
+		os << "\\frac";
+		os << "{";
+		os << this->numerator;
+		os << "}{";
+		os << this->denumerator;
+		os << "}";
 	}
 
 	Function* Fraction::simplify()

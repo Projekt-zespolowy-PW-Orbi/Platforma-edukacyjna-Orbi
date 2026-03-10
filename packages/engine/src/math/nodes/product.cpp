@@ -44,17 +44,27 @@ namespace math
 		this->products = products;
 	}
 
-	void Product::print(std::ostream &os, int depth) const
+	void Product::print_json(std::ostream &os, int depth) const
 	{
 		std::stringstream ss;
-		Function::print(ss, depth);
+		Function::print_json(ss, depth);
 		print_tabs(ss, depth);
 		ss << "{\n";
-		for(auto p : this->products) p->print(ss, depth + 1);
+		for(auto p : this->products) p->print_json(ss, depth + 1);
 		erase_comma_if_last(ss);
 		print_tabs(ss, depth);
 		ss << "},\n";
 		os << ss.str();
+	}
+
+	void Product::print_tex(std::ostream &os) const
+	{
+		for(int i = 0; i < this->products.size(); i++) {
+			if(products[i]->get_type() == Type::Sum) os << "(";
+			os << *products[i];
+			if(products[i]->get_type() == Type::Sum) os << ")";
+			if(i != this->products.size() - 1) os << " * ";
+		}
 	}
 
 	Function* Product::simplify()

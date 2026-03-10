@@ -7,7 +7,8 @@ namespace math
 	{
 	public:
 		Basic();
-		virtual void print(std::ostream& os, int depth = 0) const override;
+		virtual void print_json(std::ostream& os, int depth = 0) const override;
+		virtual void print_tex(std::ostream& os) const = 0;
 		virtual Function* simplify() = 0;
 		virtual Type get_type() = 0;
 	};

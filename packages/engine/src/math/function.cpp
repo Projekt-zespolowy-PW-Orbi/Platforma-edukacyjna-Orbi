@@ -80,7 +80,7 @@ namespace math
 		return f_type;
 	}
 
-	void Function::print(std::ostream &os, int depth) const
+	void Function::print_json(std::ostream &os, int depth) const
 	{
 		while(depth--) os << '\t';
 		os << '"' <<abi::__cxa_demangle(typeid(*this).name(), 0, 0, 0) << '"' << ":\n";
@@ -88,7 +88,9 @@ namespace math
 
 	std::ostream &operator<<(std::ostream &os, const Function &s)
 	{
-		s.print(os);
+		if (Function::PRINT_METHOD == PrintMethod::JSON)
+			s.print_json(os);
+		else s.print_tex(os);
 		return os;
 	}
 }

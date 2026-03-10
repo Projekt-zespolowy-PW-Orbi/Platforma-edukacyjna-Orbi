@@ -117,12 +117,12 @@ int parser_mode() {
 
 		input = math::Parser::fix_brackets(input);
 		math::Function* t = math::Function::convert(input);
-		ss << "Basic:" << std::endl << *t;
+		ss << "Basic:" << std::endl << *t << std::endl;
 		math::erase_comma_if_last(ss);
 		t = t->simplify();
 		ss << "Simplified:" << std::endl << *t;
 		math::erase_comma_if_last(ss);
-		std::cout << ss.str();
+		std::cout << ss.str() << std::endl;
 
 		std::cout << "-----------------------------" << std::endl;
 		std::cout << "Do you want to continue? (y/n): ";
