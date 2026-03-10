@@ -16,8 +16,65 @@ export type EngineResponse = {
 };
 
 export type ExpectedSimplifyResult =
-  | { kind: "literal"; value: string }
-  | { kind: "fraction"; numerator: number; denominator: number };
+  | { kind: "number"; value: number }
+  | { kind: "fraction"; numerator: number; denominator: number }
+  | { kind: "fractionShape"; requiredTokens: string[]; denominator?: number }
+  | {
+      kind: "nestedFraction";
+      fractionCount: number;
+      requiredTokens?: string[];
+    }
+  | { kind: "variable"; name: string; coefficient?: number }
+  | { kind: "exponential"; base: string; power: number }
+  | { kind: "sum"; requiredTokens: string[] }
+  | { kind: "product"; requiredTokens: string[] }
+  | { kind: "raw"; contains: string[]; notContains?: string[] };
+
+function extractNumericFractionPairs(result: string): Array<{
+  numerator: number;
+  denominator: number;
+}> {
+  const pairs: Array<{ numerator: number; denominator: number }> = [];
+  const regex = /"math::Fraction":\s*\{\s*(-?\d+),\s*(-?\d+)\s*\}/g;
+  let match: RegExpExecArray | null = regex.exec(result);
+
+  while (match !== null) {
+    pairs.push({
+      numerator: Number(match[1]),
+      denominator: Number(match[2]),
+    });
+    match = regex.exec(result);
+  }
+
+  return pairs;
+}
+
+function extractSingleFractionPair(result: string): {
+  numerator: number;
+  denominator: number;
+} | null {
+  const numericMatch = result.match(
+    /"math::Fraction":\s*\{\s*(-?\d+),\s*(-?\d+)\s*\}/,
+  );
+  if (numericMatch !== null) {
+    return {
+      numerator: Number(numericMatch[1]),
+      denominator: Number(numericMatch[2]),
+    };
+  }
+
+  const negativeProductMatch = result.match(
+    /"math::Fraction":\s*\{\s*"math::Product":\s*\{\s*-1,\s*(\d+)\s*\}\s*,\s*(-?\d+)\s*\}/,
+  );
+  if (negativeProductMatch !== null) {
+    return {
+      numerator: -Number(negativeProductMatch[1]),
+      denominator: Number(negativeProductMatch[2]),
+    };
+  }
+
+  return null;
+}
 
 export function sendRequest(input: object): Promise<EngineResponse> {
   return new Promise((resolveRequest, rejectRequest) => {
@@ -62,14 +119,133 @@ export function expectResultToMatch(
   expect(response.ok).toBe(true);
   expect(typeof response.result).toBe("string");
   const result = response.result as string;
+  const expectedLabel = expected.kind === "number"
+    ? String(expected.value)
+    : expected.kind === "fraction"
+      ? `${String(expected.numerator)}/${String(expected.denominator)}`
+      : expected.kind;
+  console.log(`[engine-test] expected: ${expectedLabel}, actual: ${result}`);
 
-  if (expected.kind === "literal") {
-    expect(result).toBe(expected.value);
+  if (expected.kind === "number") {
+    const numericResult = Number(result);
+    expect(Number.isNaN(numericResult)).toBe(false);
+    expect(numericResult).toBe(expected.value);
     return;
   }
 
-  const match = result.match(/"math::Fraction":\s*\{\s*(-?\d+),\s*(-?\d+)\s*\}/);
-  expect(match).not.toBeNull();
-  expect(match?.[1]).toBe(String(expected.numerator));
-  expect(match?.[2]).toBe(String(expected.denominator));
+  if (expected.kind === "fraction") {
+    const pair = extractSingleFractionPair(result);
+    expect(pair).not.toBeNull();
+    expect(pair?.numerator).toBe(expected.numerator);
+    expect(pair?.denominator).toBe(expected.denominator);
+    return;
+  }
+
+  if (expected.kind === "fractionShape") {
+    expect(result).toContain("\"math::Fraction\":");
+    for (const token of expected.requiredTokens) {
+      expect(result).toContain(token);
+    }
+    if (expected.denominator !== undefined) {
+      const pairs = extractNumericFractionPairs(result);
+      const hasExpectedDenominator = pairs.some(
+        (pair) => pair.denominator === expected.denominator,
+      );
+      expect(hasExpectedDenominator).toBe(true);
+    }
+    return;
+  }
+
+  if (expected.kind === "variable") {
+    const extracted = extractVariable(result);
+    expect(extracted).not.toBeNull();
+    expect(extracted?.name).toBe(expected.name);
+    if (expected.coefficient !== undefined) {
+      expect(extracted?.coefficient).toBe(expected.coefficient);
+    }
+    return;
+  }
+
+  if (expected.kind === "exponential") {
+    expect(result).toContain("\"math::Exponential\":");
+    expect(result).toContain(expected.base);
+    expect(result).toContain(String(expected.power));
+    return;
+  }
+
+  if (expected.kind === "sum") {
+    expect(result).toContain("\"math::Sum\":");
+    for (const token of expected.requiredTokens) {
+      expect(result).toContain(token);
+    }
+    return;
+  }
+
+  if (expected.kind === "product") {
+    expect(result).toContain("\"math::Product\":");
+    for (const token of expected.requiredTokens) {
+      expect(result).toContain(token);
+    }
+    return;
+  }
+
+  if (expected.kind === "raw") {
+    for (const token of expected.contains) {
+      expect(result).toContain(token);
+    }
+    for (const token of expected.notContains ?? []) {
+      expect(result).not.toContain(token);
+    }
+    return;
+  }
+
+  const fractionMatches = result.match(/"math::Fraction":/g) ?? [];
+  expect(fractionMatches).toHaveLength(expected.fractionCount);
+  for (const token of expected.requiredTokens ?? []) {
+    expect(result).toContain(token);
+  }
+}
+
+function extractVariable(result: string): { name: string; coefficient: number } | null {
+  // Match patterns like "2x," or "x," or "-x," or "-2x,"
+  const match = result.match(/^\s*(-?\d*)([a-zA-Z]+),?\s*$/m);
+  if (match !== null) {
+    const coefStr = match[1];
+    const name = match[2];
+    let coefficient = 1;
+    if (coefStr === "-") coefficient = -1;
+    else if (coefStr !== "") coefficient = Number(coefStr);
+    return { name, coefficient };
+  }
+  return null;
+}
+
+export function expectResultToMatchVariable(
+  response: EngineResponse,
+  expectedName: string,
+  expectedCoefficient: number = 1,
+): void {
+  expect(response.ok).toBe(true);
+  expect(typeof response.result).toBe("string");
+  const result = response.result as string;
+  const extracted = extractVariable(result);
+  expect(extracted).not.toBeNull();
+  expect(extracted?.name).toBe(expectedName);
+  expect(extracted?.coefficient).toBe(expectedCoefficient);
+}
+
+export function expectResultToContain(
+  response: EngineResponse,
+  requiredTokens: string[],
+  forbiddenTokens: string[] = [],
+): void {
+  expect(response.ok).toBe(true);
+  expect(typeof response.result).toBe("string");
+  const result = response.result as string;
+  for (const token of requiredTokens) {
+    expect(result).toContain(token);
+  }
+  for (const token of forbiddenTokens) {
+    expect(result).not.toContain(token);
+  }
 }
