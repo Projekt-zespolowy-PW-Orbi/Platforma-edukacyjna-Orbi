@@ -71,16 +71,18 @@ namespace math
 	SimplifyResult Product::simplify()
 	{
 		std::string source = this->to_string();
+		std::vector<Function*> simplified_products;
 		int constant = 1;
 		std::map<std::string, int> powers;
 		std::vector<Function*> new_products;
-		Step step(source, source);
+		Step step(source, source, source);
 
 		for(auto p : products) {
 			SimplifyResult simplified = p->simplify();
 			if(simplified.step.HasDetails()) {
 				step.AddChild(std::move(simplified.step));
 			}
+			simplified_products.push_back(simplified.function);
 
 			switch(simplified.function->get_type()) {
 				case Type::Number:
@@ -99,6 +101,9 @@ namespace math
 					break;
 			}
 		}
+
+		Product mid_product(simplified_products);
+		step.SetMidStep(mid_product.to_string());
 
 		Function* result = nullptr;
 		if(new_products.size() == 0) {
@@ -134,7 +139,7 @@ namespace math
 			result = new Product(new_products);
 		}
 
-		Step final_step(source, result->to_string());
+		Step final_step(source, step.GetMidStep(), result->to_string());
 		for(const Step& child : step.GetChildren()) {
 			final_step.AddChild(child);
 		}

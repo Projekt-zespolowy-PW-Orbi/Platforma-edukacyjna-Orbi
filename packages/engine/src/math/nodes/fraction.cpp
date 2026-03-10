@@ -217,7 +217,7 @@ namespace math
 	SimplifyResult Fraction::simplify()
 	{
 		std::string source = this->to_string();
-		Step step(source, source);
+		Step step(source, source, source);
 
 		Step numerator_step = simplify_child(this->numerator);
 		if(numerator_step.HasDetails()) {
@@ -228,6 +228,8 @@ namespace math
 		if(denumerator_step.HasDetails()) {
 			step.AddChild(std::move(denumerator_step));
 		}
+
+		step.SetMidStep(this->to_string());
 		
 		Function* reduced = reduce();
 		if(reduced != this) {
@@ -236,7 +238,7 @@ namespace math
 			delete this;
 		}
 
-		Step final_step(source, reduced->to_string());
+		Step final_step(source, step.GetMidStep(), reduced->to_string());
 		for(const Step& child : step.GetChildren()) {
 			final_step.AddChild(child);
 		}

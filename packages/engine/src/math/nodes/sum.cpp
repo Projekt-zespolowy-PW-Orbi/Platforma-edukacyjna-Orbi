@@ -77,11 +77,12 @@ namespace math
 	SimplifyResult Sum::simplify()
 	{
 		std::string source = this->to_string();
+		std::vector<Function*> simplified_components;
 		int constant = 0;
 		std::vector<Function*> new_components;
 		std::vector<Fraction*> fractions;
 		std::map<std::string, int> variables_sum;
-		Step step(source, source);
+		Step step(source, source, source);
 
 		std::function<void(Function*)> collect_component = [&](Function* node)
 		{
@@ -115,8 +116,12 @@ namespace math
 			if(simplified.step.HasDetails()) {
 				step.AddChild(std::move(simplified.step));
 			}
+			simplified_components.push_back(simplified.function);
 			collect_component(simplified.function);
 		}
+
+		Sum mid_sum(simplified_components);
+		step.SetMidStep(mid_sum.to_string());
 
 		if(!fractions.empty() && constant != 0) {
 			fractions.push_back(new Fraction(
@@ -164,7 +169,7 @@ namespace math
 			result = new Sum(new_components);
 		}
 
-		Step final_step(source, result->to_string());
+		Step final_step(source, step.GetMidStep(), result->to_string());
 		for(const Step& child : step.GetChildren()) {
 			final_step.AddChild(child);
 		}

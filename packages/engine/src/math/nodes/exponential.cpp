@@ -72,6 +72,6 @@ namespace math
 
 	SimplifyResult Exponential::simplify()
 	{
-		return SimplifyResult(this, Step(to_string(), to_string()));
+		return SimplifyResult(this, Step());
 	}
 }

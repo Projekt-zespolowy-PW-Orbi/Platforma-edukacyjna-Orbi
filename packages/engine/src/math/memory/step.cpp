@@ -43,21 +43,25 @@ namespace math {
 		std::string step_to_json(const Step& step, int depth)
 		{
 			std::ostringstream json;
+			const std::vector<Step>& children = step.GetChildren();
 			append_tabs(json, depth);
 			json << "{\n";
 
 			append_tabs(json, depth + 1);
 			json << "\"source\": \"" << escape_json_string(step.GetSource()) << "\",\n";
 
-			append_tabs(json, depth + 1);
-			json << "\"result\": \"" << escape_json_string(step.GetResult()) << "\",\n";
+			if(step.HasMidStep()) {
+				append_tabs(json, depth + 1);
+				json << "\"midStep\": \"" << escape_json_string(step.GetMidStep()) << "\",\n";
+			}
 
 			append_tabs(json, depth + 1);
-			json << "\"children\": [";
+			json << "\"result\": \"" << escape_json_string(step.GetResult()) << "\"";
 
-			const std::vector<Step>& children = step.GetChildren();
 			if(!children.empty()) {
-				json << "\n";
+				json << ",\n";
+				append_tabs(json, depth + 1);
+				json << "\"children\": [\n";
 				for(std::size_t i = 0; i < children.size(); ++i) {
 					if(i != 0) {
 						json << ",\n";
@@ -67,9 +71,10 @@ namespace math {
 				}
 				json << "\n";
 				append_tabs(json, depth + 1);
+				json << "]";
 			}
 
-			json << "]\n";
+			json << "\n";
 			append_tabs(json, depth);
 			json << "}";
 			return json.str();
