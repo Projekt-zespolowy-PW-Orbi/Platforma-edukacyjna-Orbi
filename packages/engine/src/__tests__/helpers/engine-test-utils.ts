@@ -19,21 +19,14 @@ export type ExpectedSimplifyResult =
   | { kind: "number"; value: number }
   | { kind: "fraction"; numerator: number; denominator: number }
   | { kind: "fractionShape"; requiredTokens: string[]; denominator?: number }
-  | {
-      kind: "nestedFraction";
-      fractionCount: number;
-      requiredTokens?: string[];
-    }
+  | { kind: "nestedFraction"; fractionCount: number; requiredTokens?: string[] }
   | { kind: "variable"; name: string; coefficient?: number }
   | { kind: "exponential"; base: string; power: number }
   | { kind: "sum"; requiredTokens: string[] }
   | { kind: "product"; requiredTokens: string[] }
   | { kind: "raw"; contains: string[]; notContains?: string[] };
 
-function extractNumericFractionPairs(result: string): Array<{
-  numerator: number;
-  denominator: number;
-}> {
+function extractNumericFractionPairs(result: string): Array<{ numerator: number; denominator: number }> {
   const pairs: Array<{ numerator: number; denominator: number }> = [];
   const regex = /"math::Fraction":\s*\{\s*(-?\d+),\s*(-?\d+)\s*\}/g;
   let match: RegExpExecArray | null = regex.exec(result);
@@ -142,6 +135,9 @@ export function expectResultToMatch(
   expect(response.ok).toBe(true);
   expect(typeof response.result).toBe("string");
   const result = response.result as string;
+
+  console.log("[engine-test] expected:", expected);
+  console.log("[engine-test] result:", result);
 
   switch (expected.kind) {
     case "number": {
