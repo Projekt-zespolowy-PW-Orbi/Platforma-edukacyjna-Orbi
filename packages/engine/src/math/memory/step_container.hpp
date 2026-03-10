@@ -6,9 +6,9 @@
 #include "math/memory/step.hpp"
 
 namespace math {
-	class step_container {
+	class Step_container {
 		std::vector<math::Step> steps;
 		public:
 			void push_back(Step step);
-	}
+	};
 }

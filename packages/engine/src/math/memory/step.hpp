@@ -10,6 +10,6 @@ namespace math {
 		public:
 		Step(std::string Source, std::string Result) : Source(Source), Result(Result) {}
 		inline std::string GetSource() {return Source;}
-		inline std::string Result GetResult() {return Result;}
-	}
+		inline std::string GetResult() {return Result;}
+	};
 }
