@@ -110,6 +110,31 @@ Migrations are located in [`backend/src/infrastructure/database/migrations/`](..
 | `002_create_sentence_tables.ts` | `sentence`, `sentence_concept` |
 | `003_create_algorithm_tables.ts` | `algorithm`, `step`, `algorithm_step` |
 
+#### Database Commands
+
+```bash
+# Run pending migrations only
+pnpm db:migrate
+
+# Insert dev seed data (idempotent, safe to run multiple times)
+pnpm db:seed:dev
+
+# Drop all tables + re-run migrations (no data)
+pnpm db:reset
+
+# Drop all tables + re-run migrations + seed dev data
+pnpm db:reset:dev
+```
+
+| Command | What it does |
+|---------|-------------|
+| `pnpm db:migrate` | Runs pending Kysely migrations |
+| `pnpm db:seed:dev` | Inserts sample dev data (idempotent, skips existing rows) |
+| `pnpm db:reset` | Drops all tables, re-runs migrations (clean schema, no data) |
+| `pnpm db:reset:dev` | Shortcut for `db:reset` + `db:seed:dev` |
+
+> **Note:** `db:reset` and `db:reset:dev` are destructive — they drop all tables. Use them when you want a completely fresh database.
+
 #### Manual Migration Control
 
 To disable automatic migrations on startup, set the environment variable:
