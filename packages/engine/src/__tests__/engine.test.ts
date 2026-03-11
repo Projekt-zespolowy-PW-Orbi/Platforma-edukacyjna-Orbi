@@ -1,9 +1,5 @@
-import { describe, expect, it } from "vitest";
-import {
-  expectResultToMatch,
-  sendRequest,
-  type ExpectedSimplifyResult,
-} from "./helpers/engine-test-utils.js";
+import { describe, it, expect } from "vitest";
+import { expectResultToMatch, sendRequest, type ExpectedSimplifyResult } from "./helpers/engine-test-utils.js";
 
 type SimplifyCase = {
   name: string;
