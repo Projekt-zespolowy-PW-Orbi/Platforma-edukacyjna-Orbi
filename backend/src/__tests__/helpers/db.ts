@@ -8,6 +8,7 @@ let testDb: Kysely<Database>;
 
 /**
  * Creates a fresh Kysely instance connected to the test database.
+ * Uses DB_NAME env var if set, otherwise defaults to "orbi_test".
  * Runs migrations if tables don't exist yet.
  */
 export async function setupTestDb(): Promise<Kysely<Database>> {
@@ -16,7 +17,7 @@ export async function setupTestDb(): Promise<Kysely<Database>> {
     port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 3306,
     user: process.env.DB_USER ?? "orbi",
     password: process.env.DB_PASSWORD ?? "orbi_secret",
-    database: process.env.DB_NAME ?? "orbi_dev",
+    database: process.env.DB_NAME ?? "orbi_test",
     waitForConnections: true,
     connectionLimit: 5,
     connectTimeout: 10000,
@@ -36,7 +37,6 @@ export async function setupTestDb(): Promise<Kysely<Database>> {
 
 /**
  * Clears all data from tables (preserving schema).
- * Disables FK checks temporarily for clean truncation.
  */
 export async function cleanTables(): Promise<void> {
   // Delete in order respecting foreign keys

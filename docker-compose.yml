@@ -12,6 +12,7 @@ services:
       - "${DB_PORT:-3306}:3306"
     volumes:
       - mariadb_data:/var/lib/mysql
+      - ./docker/mariadb/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       start_period: 10s
