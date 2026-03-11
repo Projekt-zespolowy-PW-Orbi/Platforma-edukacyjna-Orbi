@@ -197,23 +197,18 @@ export async function seedDev(database: Kysely<Database>): Promise<void> {
   }
 }
 
-const isMain =
-  process.argv[1] &&
-  (import.meta.url === `file:///${process.argv[1].replace(/\\/g, "/")}` ||
-    import.meta.url === `file://${process.argv[1].replace(/\\/g, "/")}`);
-
-if (isMain) {
-  void (async () => {
-    try {
-      console.log("=== Dev Seed ===\n");
-      await initializeDatabase();
-      await seedDev(db);
-      console.log("\nDev seed completed successfully!");
-    } catch (error) {
-      console.error("Dev seed failed:", error);
-      process.exitCode = 1;
-    } finally {
-      await closeConnection();
-    }
-  })();
+async function main(): Promise<void> {
+  try {
+    console.log("=== Dev Seed ===\n");
+    await initializeDatabase();
+    await seedDev(db);
+    console.log("\nDev seed completed successfully!");
+  } catch (error) {
+    console.error("Dev seed failed:", error);
+    process.exitCode = 1;
+  } finally {
+    await closeConnection();
+  }
 }
+
+void main();

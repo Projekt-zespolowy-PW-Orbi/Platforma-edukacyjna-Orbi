@@ -1,14 +1,14 @@
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
 import request from "supertest";
 import { setupTestDb, cleanTables, teardownTestDb } from "__tests__/helpers/db.js";
-import { buildApp } from "server.js";
+import { buildApp } from "app.js";
+import type { Express } from "express";
 
-let app: ReturnType<typeof buildApp>["app"];
+let app: Express;
 
 beforeAll(async () => {
-  await setupTestDb();
-  const built = buildApp();
-  app = built.app;
+  const db = await setupTestDb();
+  app = buildApp(db);
 });
 
 beforeEach(async () => {
