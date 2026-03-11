@@ -11,26 +11,6 @@
 #include <functional>
 #include <sstream>
 
-static std::string escape_json_string(std::string value) {
-	// Remove trailing ",\n if present
-	if(value.size() >= 2 && value.substr(value.size() - 2) == ",\n") {
-		value.erase(value.size() - 2);
-	}
-
-	std::string escaped;
-	for(char c : value) {
-		if(c == '\\') escaped += "\\\\";
-		else if(c == '"') escaped += "\\\"";
-		else if(c == '\n') escaped += "\\n";
-		else if(c == '\r') escaped += "\\r";
-		else if(c == '\t') escaped += "\\t";
-		else escaped += c;
-	}
-
-	return escaped;
-}
-
-
 static std::string extract_string(const std::string& json, const std::string& key) {
 	std::string search = "\"" + key + "\"";
 	auto pos = json.find(search);
