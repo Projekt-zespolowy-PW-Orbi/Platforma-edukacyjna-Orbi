@@ -93,7 +93,10 @@ int json_mode() {
 				t = t->simplify();
 				std::stringstream ss;
 				ss << *t;
-				std::cout << "{\"id\":\"" << id << "\",\"ok\":true,\"result\":\"" << escape_json_string(ss.str()) << "\"}" << std::endl;
+				math::erase_comma_if_last(ss);
+				std::string result = ss.str();
+				math::remove_white_spaces(result);
+				std::cout << "{\"id\":\"" << id << "\",\"ok\":true,\"result\":\"" << result << "\"}" << std::endl;
 			}
 		},
 	};

@@ -6,7 +6,11 @@
     "lint": "turbo run lint",
     "build": "turbo run build",
     "test": "turbo run test",
-    "dev": "turbo run dev"
+    "dev": "turbo run dev",
+    "db:migrate": "pnpm --filter @orbi/backend db:migrate",
+    "db:seed:dev": "pnpm --filter @orbi/backend db:seed:dev",
+    "db:reset": "pnpm --filter @orbi/backend db:reset",
+    "db:reset:dev": "pnpm --filter @orbi/backend db:reset:dev"
   },
   "devDependencies": {
     "@eslint/js": "^9.22.0",
