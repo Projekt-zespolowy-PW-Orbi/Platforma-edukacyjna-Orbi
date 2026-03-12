@@ -11,6 +11,19 @@
 #include <functional>
 #include <sstream>
 
+static std::string escape_quotes_only(const std::string& s) {
+    std::string out;
+    out.reserve(s.size());
+    for (char c : s) {
+        if (c == '"') {
+            out += "\\\"";
+        } else {
+            out += c;
+        }
+    }
+    return out;
+}
+
 static std::string extract_string(const std::string& json, const std::string& key) {
 	std::string search = "\"" + key + "\"";
 	auto pos = json.find(search);
@@ -48,7 +61,6 @@ static long long extract_number(const std::string& json, const std::string& key)
 
 	return std::stoll(num_str);
 }
-
 // JSON mode: process one JSON command and exit
 int json_mode() {
 	// Read exactly one line from stdin, process it, and exit
@@ -77,7 +89,8 @@ int json_mode() {
 				math::erase_comma_if_last(ss);
 				std::string result = ss.str();
 				math::remove_white_spaces(result);
-				std::cout << "{\"id\":\"" << id << "\",\"ok\":true,\"result\":\"" << result << "\"}" << std::endl;
+				std::string escaped = escape_quotes_only(result);
+				std::cout << "{\"id\":\"" << id << "\",\"ok\":true,\"result\":\"" << escaped << "\"}" << std::endl;
 			}
 		},
 	};
