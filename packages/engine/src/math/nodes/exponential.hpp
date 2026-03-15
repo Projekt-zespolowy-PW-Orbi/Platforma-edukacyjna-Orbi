@@ -13,6 +13,7 @@ namespace math
 	public:
 		Exponential(std::string line);
 		Exponential(Function* base, Function* power) : base(base), power(power) {}
+		~Exponential() override;
 
 		virtual void print_json(std::ostream& os, int depth = 0) const override;
 		virtual void print_tex(std::ostream& os) const override;

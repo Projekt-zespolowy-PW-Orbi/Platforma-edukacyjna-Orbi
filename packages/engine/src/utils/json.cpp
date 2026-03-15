@@ -73,7 +73,12 @@ int json_mode() {
 				math::Function* t = math::Function::convert(x);
 				math::SimplifyResult simplified = t->simplify();
 				t = simplified.function;
-				std::cout << "{\"id\":\"" << id << "\",\"ok\":true,\"result\":\"" << *t << "\"}" << std::endl;
+				std::stringstream ss;
+				ss << *t;
+				math::erase_comma_if_last(ss);
+				std::string result = ss.str();
+				math::remove_white_spaces(result);
+				std::cout << "{\"id\":\"" << id << "\",\"ok\":true,\"result\":\"" << result << "\"}" << std::endl;
 			}
 		},
 	};

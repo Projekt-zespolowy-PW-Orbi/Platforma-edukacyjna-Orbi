@@ -7,12 +7,18 @@
     "lint": "eslint src/",
     "build": "tsc",
     "test": "vitest run",
-    "dev": "tsx watch src/server.ts"
+    "dev": "tsx watch src/server.ts",
+    "db:migrate": "tsx src/db/migrate.ts",
+    "db:seed:dev": "tsx src/db/seed-dev.ts",
+    "db:reset": "tsx src/db/reset.ts",
+    "db:reset:dev": "pnpm db:reset && pnpm db:seed:dev"
   },
   "dependencies": {
     "@orbi/shared": "workspace:*",
     "dotenv": "^17.3.1",
     "express": "^5.1.0",
+    "kysely": "^0.28.11",
+    "mysql2": "^3.19.0",
     "nanoid": "^5.1.5",
     "zod": "^3.24.2"
   },

@@ -98,6 +98,17 @@ export default tseslint.config(
       n: nodePlugin,
     },
     rules: {
+    "no-restricted-imports": [
+      "warn",
+          {
+            patterns: [
+              {
+                regex: "^\\.\\./",
+                message: "Do not use ../ imports. Use an alias instead, for example domain/... or application/....",
+              },
+            ],
+          },
+        ],
       // Type-checked safety rules
       "@typescript-eslint/no-floating-promises": "error",
       "@typescript-eslint/no-misused-promises": [

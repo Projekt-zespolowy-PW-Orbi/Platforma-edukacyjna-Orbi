@@ -3,6 +3,7 @@
 #include <sstream>
 
 #include "../common.hpp"
+#include "../node_utils.hpp"
 #include "number.hpp"
 
 namespace math
@@ -48,6 +49,12 @@ namespace math
 		if(this->base == nullptr) this->base = new Number(0);
 	}
 
+	Exponential::~Exponential()
+	{
+		delete this->base;
+		delete this->power;
+	}
+
 	void Exponential::print_json(std::ostream &os, int depth) const
 	{
 		std::stringstream ss;	
@@ -64,14 +71,16 @@ namespace math
 
 	void Exponential::print_tex(std::ostream &os) const
 	{
-		os << this->base << "^";
+		os << *this->base << "^";
 		Type type = this->power->get_type();
-		if(type == Type::Variable || type == Type::Number) os << this->power;
-		else os << "{" << this->power << "}";
+		if(type == Type::Variable || type == Type::Number) os << *this->power;
+		else os << "{" << *this->power << "}";
 	}
 
 	SimplifyResult Exponential::simplify()
 	{
+		simplify_owned_child(this->base);
+		simplify_owned_child(this->power);
 		return SimplifyResult(this, Step());
 	}
 }

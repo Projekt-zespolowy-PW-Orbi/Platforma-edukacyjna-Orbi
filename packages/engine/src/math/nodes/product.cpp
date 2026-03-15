@@ -2,13 +2,17 @@
 
 #include <map>
 #include <sstream>
+#include <functional>
 #include <utility>
 
 #include "../common.hpp"
+#include "../node_utils.hpp"
 
 #include "number.hpp"
 #include "variable.hpp"
 #include "exponential.hpp"
+#include "fraction.hpp"
+
 
 namespace math
 {
@@ -45,6 +49,20 @@ namespace math
 		this->products = products;
 	}
 
+	Product::~Product()
+	{
+		for(Function* product : this->products) {
+			delete product;
+		}
+	}
+
+	std::vector<Function*> Product::take_products()
+	{
+		std::vector<Function*> taken = this->products;
+		this->products.clear();
+		return taken;
+	}
+
 	void Product::print_json(std::ostream &os, int depth) const
 	{
 		std::stringstream ss;
@@ -75,68 +93,121 @@ namespace math
 		int constant = 1;
 		std::map<std::string, int> powers;
 		std::vector<Function*> new_products;
+		std::vector<Fraction*> fractions;
+		std::vector<Function*> owned_products = take_products();
 		Step step(source, source, source);
+		Function* result = nullptr;
 
-		for(auto p : products) {
-			SimplifyResult simplified = p->simplify();
-			if(simplified.step.HasDetails()) {
-				step.AddChild(std::move(simplified.step));
-			}
-			simplified_products.push_back(simplified.function);
+		std::function<void(Function*)> collect_factor = [&](Function* node)
+		{
+			switch(node->get_type()) {
+				case Type::Product: {
+					std::vector<Function*> nested_products = static_cast<Product*>(node)->take_products();
+					for(Function* factor : nested_products) {
+						collect_factor(factor);
+					}
+					delete node;
+					break;
+				}
 
-			switch(simplified.function->get_type()) {
 				case Type::Number:
-					constant *= static_cast<Number*>(simplified.function)->number;
+					constant *= static_cast<Number*>(node)->number;
 					break;
 
 				case Type::Variable: {
-					Variable* var = static_cast<Variable*>(simplified.function);
+					Variable* var = static_cast<Variable*>(node);
 					constant *= var->number;
 					powers[var->name]++;
 					break;
 				}
 
-				default:
-					new_products.push_back(simplified.function);
+				case Type::Fraction: {
+					fractions.push_back(static_cast<Fraction*>(node));
 					break;
+				}
+
+				default:
+					new_products.push_back(node);
+					break;
+			}
+		};
+
+		for(Function*& p : owned_products) {
+			SimplifyResult simplified = simplify_owned_child(p);
+			if(simplified.step.HasDetails()) {
+				step.AddChild(std::move(simplified.step));
+			}
+			collect_factor(p);
+		}
+
+		if (constant == 0) {
+			result = new Number(0);
+		}
+
+		if(!fractions.empty()) {
+			Function* merged_fraction = Fraction::consume_fractions_for_product(fractions, constant);
+			if(merged_fraction != nullptr) {
+				merged_fraction = merged_fraction->simplify().function;
+				new_products.push_back(merged_fraction);
+				fractions.clear();
+				constant = 1;
 			}
 		}
 
-		Product mid_product(simplified_products);
-		step.SetMidStep(mid_product.to_string());
-
-		Function* result = nullptr;
-		if(new_products.size() == 0) {
+		if(new_products.empty()) {
 			if(powers.size() == 1) {
 				if(powers.begin()->second == 1) {
 					result = new Variable(powers.begin()->first, constant);
+					result = result;
 				}
 				else {
-					result = new Exponential(
-						new Variable(powers.begin()->first, 1),
-						new Number(powers.begin()->second)
-					);
+					if(constant == 1) {
+						result = new Exponential(
+							new Variable(powers.begin()->first, 1),
+							new Number(powers.begin()->second)
+						);
+					} else {
+						Function* result = new Product(std::vector<Function*>{
+							new Number(constant),
+							new Exponential(
+								new Variable(powers.begin()->first, 1),
+								new Number(powers.begin()->second)
+							)
+						});
+					}					
 				}
 			}
-			else if(powers.size() == 0) {
+			else if(powers.empty()) {
 				result = new Number(constant);
 			}
 		}
 
-		if(result == nullptr) {
-			new_products.push_back(new Number(constant));
+		if(!result) {
+			Product mid_product(new_products);
+			step.SetMidStep(mid_product.to_string());
 
-			for(auto p : powers) {
-				if(p.second == 1)
+			if(constant != 1 || new_products.empty()) {
+				new_products.push_back(new Number(constant));
+			}
+
+			for(const auto& p : powers) {
+				if(p.second == 1) {
 					new_products.push_back(new Variable(p.first, 1));
-				else
+				}
+				else {
 					new_products.push_back(new Exponential(
 						new Variable(p.first, 1),
 						new Number(p.second)
 					));
+				}
 			}
-
-			result = new Product(new_products);
+			
+			if(new_products.size() == 1) {
+				result = new_products[0];
+			}
+			else {
+				result = new Product(new_products);
+			}
 		}
 
 		Step final_step(source, step.GetMidStep(), result->to_string());

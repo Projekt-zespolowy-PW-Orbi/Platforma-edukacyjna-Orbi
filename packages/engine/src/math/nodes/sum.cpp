@@ -7,6 +7,7 @@
 
 #include "../common.hpp"
 #include "../function.hpp"
+#include "../node_utils.hpp"
 
 #include "number.hpp"
 #include "variable.hpp"
@@ -52,6 +53,20 @@ namespace math
 		this->components = components;
 	}
 
+	Sum::~Sum()
+	{
+		for(Function* component : this->components) {
+			delete component;
+		}
+	}
+
+	std::vector<Function*> Sum::take_components()
+	{
+		std::vector<Function*> taken = this->components;
+		this->components.clear();
+		return taken;
+	}
+
 	void Sum::print_json(std::ostream &os, int depth) const
 	{
 		std::stringstream ss;
@@ -83,15 +98,19 @@ namespace math
 		std::vector<Fraction*> fractions;
 		std::map<std::string, int> variables_sum;
 		Step step(source, source, source);
+		std::vector<Function*> owned_components = take_components();
 
 		std::function<void(Function*)> collect_component = [&](Function* node)
 		{
 			switch(node->get_type()) {
-				case Type::Sum:
-					for(Function* c : static_cast<Sum*>(node)->components) {
+				case Type::Sum: {
+					std::vector<Function*> nested_components = static_cast<Sum*>(node)->take_components();
+					for(Function* c : nested_components) {
 						collect_component(c);
 					}
+					delete node;
 					break;
+				}
 
 				case Type::Number:
 					constant += static_cast<Number*>(node)->number;
@@ -111,8 +130,8 @@ namespace math
 			}
 		};
 
-		for(Function* component : this->components) {
-			SimplifyResult simplified = component->simplify();
+		for(Function* component : owned_components) {
+			SimplifyResult simplified = simplify_owned_child(component);
 			if(simplified.step.HasDetails()) {
 				step.AddChild(std::move(simplified.step));
 			}
@@ -131,8 +150,13 @@ namespace math
 			constant = 0;
 		}
 
-		if(fractions.size() > 1) {
-			Fraction::make_common_denominator(fractions);
+		if(fractions.size() > 1 && Fraction::make_common_denominator(fractions)) {
+			Function* merged = Fraction::consume_fractions_for_sum(fractions);
+			if(merged != nullptr) {
+				merged = merged->simplify().function;
+				new_components.push_back(merged);
+				fractions.clear();
+			}
 		}
 
 		for(Fraction* fraction : fractions) {
@@ -173,6 +197,7 @@ namespace math
 		for(const Step& child : step.GetChildren()) {
 			final_step.AddChild(child);
 		}
+
 		return SimplifyResult(result, std::move(final_step));
 	}
 }
