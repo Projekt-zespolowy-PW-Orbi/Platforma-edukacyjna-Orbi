@@ -1,5 +1,6 @@
 import { useState } from "react";
 import DragAndDropQuiz from "features/quiz/dragAndDrop/DragAndDropQuiz";
+import CategoryMatchingQuiz from "features/quiz/categoryMatchingQuiz/CategoryMatchingQuiz";
 interface DoubleResponse {
   result: number;
 }
@@ -37,6 +38,7 @@ export function App() {
       {result !== null && <p data-testid="result">Result: {result}</p>}
       {error && <p data-testid="error">Error: {error}</p>}
       <DragAndDropQuiz />
+      <CategoryMatchingQuiz />
     </div>
   );
 }
