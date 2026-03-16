@@ -11,35 +11,6 @@ namespace math {
 			}
 		}
 
-		std::string escape_json_string(const std::string& value)
-		{
-			std::ostringstream escaped;
-			for(char c : value) {
-				switch(c) {
-					case '\\':
-						escaped << "\\\\";
-						break;
-					case '"':
-						escaped << "\\\"";
-						break;
-					case '\n':
-						escaped << "\\n";
-						break;
-					case '\r':
-						escaped << "\\r";
-						break;
-					case '\t':
-						escaped << "\\t";
-						break;
-					default:
-						escaped << c;
-						break;
-				}
-			}
-
-			return escaped.str();
-		}
-
 		std::string step_to_json(const Step& step, int depth)
 		{
 			std::ostringstream json;
@@ -48,15 +19,15 @@ namespace math {
 			json << "{\n";
 
 			append_tabs(json, depth + 1);
-			json << "\"source\": \"" << escape_json_string(step.GetSource()) << "\",\n";
+			json << "\"source\": \"" << step.GetSource() << "\",\n";
 
 			if(step.HasMidStep()) {
 				append_tabs(json, depth + 1);
-				json << "\"midStep\": \"" << escape_json_string(step.GetMidStep()) << "\",\n";
+				json << "\"midStep\": \"" << step.GetMidStep() << "\",\n";
 			}
 
 			append_tabs(json, depth + 1);
-			json << "\"result\": \"" << escape_json_string(step.GetResult()) << "\"";
+			json << "\"result\": \"" << step.GetResult() << "\"";
 
 			if(!children.empty()) {
 				json << ",\n";
