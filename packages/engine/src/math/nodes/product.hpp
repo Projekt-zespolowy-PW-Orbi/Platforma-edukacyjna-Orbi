@@ -25,6 +25,7 @@ namespace math
 		static void append_power_factors(std::vector<Function*>& out, const std::map<std::string, int>& powers);
 		void collect_factor(Function* node, ProductAccumulation& acc);
 		Function* try_build_simple_result(const ProductAccumulation& acc, const std::vector<Function*>& new_products);
+		void merge_fraction_factors(ProductAccumulation& acc, std::vector<Function*>& new_products);
 
 	public:
 		Product(std::string product);

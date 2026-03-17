@@ -113,15 +113,7 @@ namespace math
 			result = new Number(0);
 		}
 
-		if(!acc.fractions.empty()) {
-			Function* merged_fraction = Fraction::consume_fractions_for_product(acc.fractions, acc.constant);
-			if(merged_fraction != nullptr) {
-				merged_fraction = merged_fraction->simplify().function;
-				new_products.push_back(merged_fraction);
-				acc.fractions.clear();
-				acc.constant = 1;
-			}
-		}
+		merge_fraction_factors(acc, new_products);
 
 		if(!result) {
 			result = try_build_simple_result(acc, new_products);
@@ -239,5 +231,22 @@ namespace math
 		}
 
 		return nullptr;
+	}
+
+	void Product::merge_fraction_factors(ProductAccumulation& acc, std::vector<Function*>& new_products)
+	{
+		if(acc.fractions.empty()) {
+			return;
+		}
+
+		Function* merged_fraction = Fraction::consume_fractions_for_product(acc.fractions, acc.constant);
+		if(merged_fraction == nullptr) {
+			return;
+		}
+
+		merged_fraction = merged_fraction->simplify().function;
+		new_products.push_back(merged_fraction);
+		acc.fractions.clear();
+		acc.constant = 1;
 	}
 }
