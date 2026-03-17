@@ -29,6 +29,7 @@ namespace math
 		void append_accumulated_factors(ProductAccumulation& acc, std::vector<Function*>& new_products);
 		Function* build_result_from_factors(std::vector<Function*>& new_products);
 		Step build_final_step(const std::string& source, const Step& step, Function* result);
+		Function* build_simplified_result(ProductAccumulation& acc, std::vector<Function*>& new_products, Step& step);
 
 	public:
 		Product(std::string product);

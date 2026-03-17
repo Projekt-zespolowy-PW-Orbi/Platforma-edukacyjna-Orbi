@@ -97,7 +97,6 @@ namespace math
 		std::vector<Function*> owned_products = take_products();
 		std::vector<Function*> new_products;
 		Step step(source, source, source);
-		Function* result = nullptr;
 
 		ProductAccumulation acc;
 
@@ -109,23 +108,7 @@ namespace math
 			collect_factor(p, acc);
 		}
 
-		if (acc.constant == 0) {
-			result = new Number(0);
-		}
-
-		merge_fraction_factors(acc, new_products);
-
-		if(!result) {
-			result = try_build_simple_result(acc, new_products);
-		}
-
-		if(!result) {
-			Product mid_product(new_products);
-			step.SetMidStep(mid_product.to_string());
-
-			append_accumulated_factors(acc, new_products);
-			result = build_result_from_factors(new_products);
-		}
+		Function* result = build_simplified_result(acc, new_products, step);
 
 		return SimplifyResult(result, build_final_step(source, step, result));
 	}
@@ -262,5 +245,27 @@ namespace math
 		}
 
 		return final_step;
+	}
+
+	Function* Product::build_simplified_result(ProductAccumulation& acc, std::vector<Function*>& new_products, Step& step)
+	{
+		Function* result = nullptr;
+
+		if(acc.constant == 0) {
+			return new Number(0);
+		}
+
+		merge_fraction_factors(acc, new_products);
+
+		result = try_build_simple_result(acc, new_products);
+		if(result) {
+			return result;
+		}
+
+		Product mid_product(new_products);
+		step.SetMidStep(mid_product.to_string());
+
+		append_accumulated_factors(acc, new_products);
+		return build_result_from_factors(new_products);
 	}
 }
