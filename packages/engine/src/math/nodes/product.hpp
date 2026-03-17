@@ -26,6 +26,8 @@ namespace math
 		void collect_factor(Function* node, ProductAccumulation& acc);
 		Function* try_build_simple_result(const ProductAccumulation& acc, const std::vector<Function*>& new_products);
 		void merge_fraction_factors(ProductAccumulation& acc, std::vector<Function*>& new_products);
+		void append_accumulated_factors(ProductAccumulation& acc, std::vector<Function*>& new_products);
+		Function* build_result_from_factors(std::vector<Function*>& new_products);
 
 	public:
 		Product(std::string product);

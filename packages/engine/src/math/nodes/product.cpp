@@ -123,18 +123,8 @@ namespace math
 			Product mid_product(new_products);
 			step.SetMidStep(mid_product.to_string());
 
-			if(acc.constant != 1 || new_products.empty()) {
-				new_products.push_back(new Number(acc.constant));
-			}
-
-			append_power_factors(new_products, acc.powers);
-			
-			if(new_products.size() == 1) {
-				result = new_products[0];
-			}
-			else {
-				result = new Product(new_products);
-			}
+			append_accumulated_factors(acc, new_products);
+			result = build_result_from_factors(new_products);
 		}
 
 		Step final_step(source, step.GetMidStep(), result->to_string());
@@ -248,5 +238,23 @@ namespace math
 		new_products.push_back(merged_fraction);
 		acc.fractions.clear();
 		acc.constant = 1;
+	}
+
+	void Product::append_accumulated_factors(ProductAccumulation& acc, std::vector<Function*>& new_products)
+	{
+		if(acc.constant != 1 || new_products.empty()) {
+			new_products.push_back(new Number(acc.constant));
+		}
+
+		append_power_factors(new_products, acc.powers);
+	}
+
+	Function* Product::build_result_from_factors(std::vector<Function*>& new_products)
+	{
+		if(new_products.size() == 1) {
+			return new_products[0];
+		}
+
+		return new Product(new_products);
 	}
 }
