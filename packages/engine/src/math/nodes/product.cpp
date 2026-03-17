@@ -123,7 +123,9 @@ namespace math
 			}
 		}
 
-		result = try_build_simple_result(acc);
+		if(!result) {
+			result = try_build_simple_result(acc, new_products);
+		}
 
 		if(!result) {
 			Product mid_product(new_products);
@@ -205,7 +207,7 @@ namespace math
 		}
 	}
 
-	Function* Product::try_build_simple_result(const ProductAccumulation& acc)
+	Function* Product::try_build_simple_result(const ProductAccumulation& acc, const std::vector<Function*>& new_products)
 	{
 		if(acc.constant == 0) {
 			return new Number(0);
