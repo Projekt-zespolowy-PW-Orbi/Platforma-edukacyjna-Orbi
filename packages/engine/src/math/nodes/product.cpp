@@ -93,7 +93,6 @@ namespace math
 	SimplifyResult Product::simplify()
 	{
 		std::string source = this->to_string();
-		std::vector<Function*> simplified_products;
 		std::vector<Function*> owned_products = take_products();
 		std::vector<Function*> new_products;
 		Step step(source, source, source);
