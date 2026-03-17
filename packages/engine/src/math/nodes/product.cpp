@@ -127,12 +127,7 @@ namespace math
 			result = build_result_from_factors(new_products);
 		}
 
-		Step final_step(source, step.GetMidStep(), result->to_string());
-		for(const Step& child : step.GetChildren()) {
-			final_step.AddChild(child);
-		}
-
-		return SimplifyResult(result, std::move(final_step));
+		return SimplifyResult(result, build_final_step(source, step, result));
 	}
 
 	Function* Product::build_power_factor(const std::string& name, int power)
@@ -256,5 +251,16 @@ namespace math
 		}
 
 		return new Product(new_products);
+	}
+
+	Step Product::build_final_step(const std::string& source, const Step& step, Function* result)
+	{
+		Step final_step(source, step.GetMidStep(), result->to_string());
+
+		for(const Step& child : step.GetChildren()) {
+			final_step.AddChild(child);
+		}
+
+		return final_step;
 	}
 }

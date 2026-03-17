@@ -28,6 +28,7 @@ namespace math
 		void merge_fraction_factors(ProductAccumulation& acc, std::vector<Function*>& new_products);
 		void append_accumulated_factors(ProductAccumulation& acc, std::vector<Function*>& new_products);
 		Function* build_result_from_factors(std::vector<Function*>& new_products);
+		Step build_final_step(const std::string& source, const Step& step, Function* result);
 
 	public:
 		Product(std::string product);
