@@ -196,17 +196,7 @@ namespace math
 				new_products.push_back(new Number(constant));
 			}
 
-			for(const auto& p : powers) {
-				if(p.second == 1) {
-					new_products.push_back(new Variable(p.first, 1));
-				}
-				else {
-					new_products.push_back(new Exponential(
-						new Variable(p.first, 1),
-						new Number(p.second)
-					));
-				}
-			}
+			append_power_factors(new_products, powers);
 			
 			if(new_products.size() == 1) {
 				result = new_products[0];
@@ -222,5 +212,24 @@ namespace math
 		}
 
 		return SimplifyResult(result, std::move(final_step));
+	}
+
+	Function* Product::build_power_factor(const std::string& name, int power)
+	{
+		if(power == 1) {
+			return new Variable(name, 1);
+		}
+
+		return new Exponential(
+			new Variable(name, 1),
+			new Number(power)
+		);
+	}
+
+	void Product::append_power_factors(std::vector<Function*>& out, const std::map<std::string, int>& powers)
+	{
+		for(const auto& [name, power] : powers) {
+			out.push_back(build_power_factor(name, power));
+		}
 	}
 }

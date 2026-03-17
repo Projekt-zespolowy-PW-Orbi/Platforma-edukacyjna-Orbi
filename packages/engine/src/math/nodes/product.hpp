@@ -9,6 +9,10 @@ namespace math
 	class Product : public Function
 	{
 		std::vector<Function*> products;
+		
+	private:
+		static Function* build_power_factor(const std::string& name, int power);
+		static void append_power_factors(std::vector<Function*>& out, const std::map<std::string, int>& powers);
 
 	public:
 		Product(std::string product);
