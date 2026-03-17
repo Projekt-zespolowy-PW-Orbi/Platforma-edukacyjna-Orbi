@@ -1,18 +1,29 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <map>
 
 #include "../function.hpp"
+#include "fraction.hpp"
 
 namespace math
 {
 	class Product : public Function
 	{
 		std::vector<Function*> products;
-		
+
+		struct ProductAccumulation
+		{
+			int constant = 1;
+			std::map<std::string, int> powers;
+			std::vector<Fraction*> fractions;
+			std::vector<Function*> other_factors;
+		};
+
 	private:
 		static Function* build_power_factor(const std::string& name, int power);
 		static void append_power_factors(std::vector<Function*>& out, const std::map<std::string, int>& powers);
+		void collect_factor(Function* node, ProductAccumulation& acc);
 
 	public:
 		Product(std::string product);
