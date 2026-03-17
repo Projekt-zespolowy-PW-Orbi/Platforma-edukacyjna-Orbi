@@ -123,33 +123,7 @@ namespace math
 			}
 		}
 
-		if(new_products.empty()) {
-			if(acc.powers.size() == 1) {
-				if(acc.powers.begin()->second == 1) {
-					result = new Variable(acc.powers.begin()->first, acc.constant);
-					result = result;
-				}
-				else {
-					if(acc.constant == 1) {
-						result = new Exponential(
-							new Variable(acc.powers.begin()->first, 1),
-							new Number(acc.powers.begin()->second)
-						);
-					} else {
-						result = new Product(std::vector<Function*>{
-							new Number(acc.constant),
-							new Exponential(
-								new Variable(acc.powers.begin()->first, 1),
-								new Number(acc.powers.begin()->second)
-							)
-						});
-					}					
-				}
-			}
-			else if(acc.powers.empty()) {
-				result = new Number(acc.constant);
-			}
-		}
+		result = try_build_simple_result(acc);
 
 		if(!result) {
 			Product mid_product(new_products);
@@ -229,5 +203,39 @@ namespace math
 				acc.other_factors.push_back(node);
 				break;
 		}
+	}
+
+	Function* Product::try_build_simple_result(const ProductAccumulation& acc)
+	{
+		if(acc.constant == 0) {
+			return new Number(0);
+		}
+
+		if(!acc.other_factors.empty()) {
+			return nullptr;
+		}
+
+		if(acc.powers.empty()) {
+			return new Number(acc.constant);
+		}
+
+		if(acc.powers.size() == 1) {
+			const auto& [name, power] = *acc.powers.begin();
+
+			if(power == 1) {
+				return new Variable(name, acc.constant);
+			}
+
+			if(acc.constant == 1) {
+				return build_power_factor(name, power);
+			}
+
+			return new Product(std::vector<Function*>{
+				new Number(acc.constant),
+				build_power_factor(name, power)
+			});
+		}
+
+		return nullptr;
 	}
 }
