@@ -4,6 +4,7 @@
 #include <sstream>
 #include <functional>
 #include <utility>
+#include <iostream>
 
 #include "../common.hpp"
 #include "../node_utils.hpp"
@@ -13,6 +14,7 @@
 #include "exponential.hpp"
 #include "fraction.hpp"
 
+#include "config.hpp"
 
 namespace math
 {
@@ -37,6 +39,7 @@ namespace math
 				product += s;
 			}
 			else if(s == '*') {
+				if(is_debug) std::cout << product << std::endl;
 				if(!product.empty()) products.push_back(Function::convert(product));
 				product = "";
 			}
@@ -45,7 +48,10 @@ namespace math
 			}
 		}
 
-		if(!product.empty()) products.push_back(Function::convert(product));
+		if(!product.empty()) {
+			if(is_debug) std::cout << product << std::endl;
+			products.push_back(Function::convert(product));
+		} 
 		this->products = products;
 	}
 
@@ -167,7 +173,7 @@ namespace math
 							new Number(powers.begin()->second)
 						);
 					} else {
-						Function* result = new Product(std::vector<Function*>{
+						result = new Product(std::vector<Function*>{
 							new Number(constant),
 							new Exponential(
 								new Variable(powers.begin()->first, 1),
