@@ -34,13 +34,13 @@ function setupSpawn(
 }
 
 /** Reads the request JSON that was written to a mock process's stdin. */
-function getRequest(proc: MockProcess): { id: string; op: string; x: number } {
+function getRequest(proc: MockProcess): { id: string; op: string; x: string } {
   const written = proc.stdin.write.mock.calls[0]![0] as string;
-  return JSON.parse(written) as { id: string; op: string; x: number };
+  return JSON.parse(written) as { id: string; op: string; x: string };
 }
 
 /** Simulates a successful engine response. */
-function respondOk(proc: MockProcess, result: number) {
+function respondOk(proc: MockProcess, result: string) {
   const req = getRequest(proc);
   proc.stdout.emit("data", Buffer.from(
     JSON.stringify({ id: req.id, ok: true, result }) + "\n"
@@ -76,24 +76,24 @@ afterEach(() => {
 describe("EngineAdapter", () => {
   describe("call - success path", () => {
     it("returns result when engine responds with ok=true", async () => {
-      setupSpawn(spawnMock, (proc) => respondOk(proc, 42));
+      setupSpawn(spawnMock, (proc) => respondOk(proc, "42"));
 
       const adapter = new EngineAdapter();
-      const result = await adapter.call("double", 21);
+      const result = await adapter.call("double", "21");
 
-      expect(result).toEqual({ result: 42 });
+      expect(result).toEqual({ result: "42" });
     });
 
     it("sends correct op and x in the JSON request", async () => {
       setupSpawn(spawnMock, (proc) => {
         const req = getRequest(proc);
         expect(req.op).toBe("gcd");
-        expect(req.x).toBe(12);
-        respondOk(proc, 4);
+        expect(req.x).toBe("12");
+        respondOk(proc, "4");
       });
 
       const adapter = new EngineAdapter();
-      await adapter.call("gcd", 12);
+      await adapter.call("gcd","12");
     });
 
     it("ignores non-JSON lines and finds the response by matching ID", async () => {
@@ -108,9 +108,9 @@ describe("EngineAdapter", () => {
       });
 
       const adapter = new EngineAdapter();
-      const result = await adapter.call("add", 5);
+      const result = await adapter.call("add", "5");
 
-      expect(result).toEqual({ result: 10 });
+      expect(result).toEqual({ result: "10" });
     });
   });
 
@@ -120,7 +120,7 @@ describe("EngineAdapter", () => {
 
       const adapter = new EngineAdapter();
 
-      await expect(adapter.call("bad_op", 0)).rejects.toThrow("unknown op");
+      await expect(adapter.call("bad_op", "0")).rejects.toThrow("unknown op");
       // Should have retried MAX_RETRIES (3) times
       expect(spawnMock).toHaveBeenCalledTimes(3);
     });
@@ -133,7 +133,7 @@ describe("EngineAdapter", () => {
 
       const adapter = new EngineAdapter();
 
-      await expect(adapter.call("crash", 0)).rejects.toThrow(/exited with code 1/);
+      await expect(adapter.call("crash", "0")).rejects.toThrow(/exited with code 1/);
     });
 
     it("throws when no matching ID found in stdout", async () => {
@@ -146,7 +146,7 @@ describe("EngineAdapter", () => {
 
       const adapter = new EngineAdapter();
 
-      await expect(adapter.call("op", 1)).rejects.toThrow("No response with matching id");
+      await expect(adapter.call("op", "1")).rejects.toThrow("No response with matching id");
     });
 
     it("throws when engine process emits error event", async () => {
@@ -156,7 +156,7 @@ describe("EngineAdapter", () => {
 
       const adapter = new EngineAdapter();
 
-      await expect(adapter.call("op", 1)).rejects.toThrow("ENOENT");
+      await expect(adapter.call("op", "1")).rejects.toThrow("ENOENT");
     });
 
     it("throws when stdin.write fails", async () => {
@@ -170,7 +170,7 @@ describe("EngineAdapter", () => {
 
       const adapter = new EngineAdapter();
 
-      await expect(adapter.call("op", 1)).rejects.toThrow("broken pipe");
+      await expect(adapter.call("op", "1")).rejects.toThrow("broken pipe");
     });
 
     it("includes stderr content in error message on non-zero exit", async () => {
@@ -181,7 +181,7 @@ describe("EngineAdapter", () => {
 
       const adapter = new EngineAdapter();
 
-      await expect(adapter.call("op", 1)).rejects.toThrow(/out of memory/);
+      await expect(adapter.call("op", '1')).rejects.toThrow(/out of memory/);
     });
   });
 
@@ -191,12 +191,12 @@ describe("EngineAdapter", () => {
         if (idx < 2) {
           proc.emit("error", new Error("ENOENT"));
         } else {
-          respondOk(proc, 100);
+          respondOk(proc, "100");
         }
       });
 
       const adapter = new EngineAdapter();
-      const result = await adapter.call("op", 50);
+      const result = await adapter.call("op", "50");
 
       expect(result).toEqual({ result: 100 });
       expect(spawnMock).toHaveBeenCalledTimes(3);
@@ -212,12 +212,12 @@ describe("EngineAdapter", () => {
         if (idx < 2) {
           proc.emit("error", new Error("fail"));
         } else {
-          respondOk(proc, 1);
+          respondOk(proc, "1");
         }
       });
 
       const adapter = new EngineAdapter();
-      await adapter.call("op", 1);
+      await adapter.call("op", "1");
 
       expect(ids).toHaveLength(3);
       // All IDs should be unique (nanoid)
@@ -233,7 +233,7 @@ describe("EngineAdapter", () => {
 
       const adapter = new EngineAdapter();
 
-      await expect(adapter.call("op", 1)).rejects.toThrow("fail-3");
+      await expect(adapter.call("op", "1")).rejects.toThrow("fail-3");
       expect(callCount).toBe(3);
     });
   });

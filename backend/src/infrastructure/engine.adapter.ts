@@ -14,12 +14,12 @@ const MAX_RETRIES = parseInt(process.env.ENGINE_MAX_RETRIES ?? "3", 10);
 interface EngineResponse {
   id: string;
   ok?: boolean;
-  result?: number;
+  result?: string;
   error?: string;
 }
 
 export class EngineAdapter implements IEnginePort {
-  private async spawnAndExecute(id: string, op: string, x: number): Promise<EngineResponse> {
+  private async spawnAndExecute(id: string, op: string, x: string): Promise<EngineResponse> {
     return new Promise((resolve, reject) => {
       const proc: ChildProcess = spawn(enginePath, { stdio: ["pipe", "pipe", "pipe"] });
 
@@ -104,7 +104,7 @@ export class EngineAdapter implements IEnginePort {
     });
   }
 
-  async call(op: string, x: number): Promise<{ result: number }> {
+  async call(op: string, x: string): Promise<{ result: string }> {
     let lastError: Error | null = null;
 
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {

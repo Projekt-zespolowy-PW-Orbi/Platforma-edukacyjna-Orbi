@@ -1,4 +1,4 @@
 export interface IEnginePort {
-  call(op: string, x: number): Promise<{ result: number }>;
+  call(op: string, x: string): Promise<{ result: string }>;
   shutdown(): void;
 }
