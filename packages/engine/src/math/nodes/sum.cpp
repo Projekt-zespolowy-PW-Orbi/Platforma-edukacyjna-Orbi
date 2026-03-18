@@ -108,13 +108,7 @@ namespace math
 		Sum mid_sum(simplified_components);
 		step.SetMidStep(mid_sum.to_string());
 
-		if(!acc.fractions.empty() && acc.constant != 0) {
-			acc.fractions.push_back(new Fraction(
-				new Number(acc.constant),
-				new Number(1)
-			));
-			acc.constant = 0;
-		}
+		
 
 		if(acc.fractions.size() > 1 && Fraction::make_common_denominator(acc.fractions)) {
 			Function* merged = Fraction::consume_fractions_for_sum(acc.fractions);
@@ -194,5 +188,15 @@ namespace math
 					new_components.push_back(node);
 					break;
 			}
+	}
+
+	void Sum::merge_constant_into_fractions(SumAccumulation& acc) {
+		if(!acc.fractions.empty() && acc.constant != 0) {
+			acc.fractions.push_back(new Fraction(
+				new Number(acc.constant),
+				new Number(1)
+			));
+			acc.constant = 0;
+		}
 	}
 }
