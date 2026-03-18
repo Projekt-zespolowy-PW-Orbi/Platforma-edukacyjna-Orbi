@@ -13,10 +13,15 @@ export function App() {
     setLoading(true);
     setError(null);
     try {
+      const input = document.getElementById("enginecall") as HTMLInputElement | null;
+      const val = input?.value ?? "";
+      if (!val.trim()) {
+        return;
+      }
       const res = await fetch("/engine/simplify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ x: "2 * a + 2 * a" }),
+        body: JSON.stringify({ x: val }),
       });
       if (!res.ok) throw new Error(`HTTP ${String(res.status)}`);
       const data = (await res.json()) as SimplifyResponse;
@@ -32,6 +37,7 @@ export function App() {
   return (
     <div>
       <h1>Orbi</h1>
+      <input type="text" id="enginecall"/>
       <button onClick={handleSimplify} disabled={loading}>
         {loading ? "Loading..." : "Double 1"}
       </button>
