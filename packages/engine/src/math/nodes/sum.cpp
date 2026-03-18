@@ -114,14 +114,7 @@ namespace math
 
 		append_variable_sums(new_components, acc.variables_sum);
 		append_constant_component(new_components, acc.constant);
-
-		Function* result = nullptr;
-		if(new_components.size() == 1) {
-			result = new_components[0];
-		}
-		else {
-			result = new Sum(new_components);
-		}
+		Function* result = build_result_from_components(new_components);
 
 		Step final_step(source, step.GetMidStep(), result->to_string());
 		for(const Step& child : step.GetChildren()) {
@@ -204,6 +197,15 @@ namespace math
 				new Number(-1),
 				new Number(-constant)
 			}));
+		}
+	}
+
+	Function* Sum::build_result_from_components(std::vector<Function*>& components) {
+		if(components.size() == 1) {
+			return components[0];
+		}
+		else {
+			return new Sum(components);
 		}
 	}
 }
