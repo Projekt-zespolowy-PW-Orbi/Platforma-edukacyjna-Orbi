@@ -108,6 +108,9 @@ namespace math
 		Sum mid_sum(simplified_components);
 		step.SetMidStep(mid_sum.to_string());
 
+		merge_constant_into_fractions(acc);
+		merge_fraction_components(acc, new_components);
+
 		for(Fraction* fraction : acc.fractions) {
 			new_components.push_back(fraction);
 		}
