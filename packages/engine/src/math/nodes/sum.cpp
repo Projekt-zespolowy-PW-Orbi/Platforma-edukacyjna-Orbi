@@ -207,8 +207,6 @@ namespace math
 		if(components.size() == 1) {
 			return components[0];
 		}
-		else {
-			return new Sum(components);
-		}
+		return new Sum(components);
 	}
 }
