@@ -1,6 +1,5 @@
 #include "sum.hpp"
 
-#include <map>
 #include <sstream>
 #include <functional>
 #include <utility>
@@ -12,7 +11,6 @@
 #include "number.hpp"
 #include "variable.hpp"
 #include "product.hpp"
-#include "fraction.hpp"
 
 namespace math
 {
@@ -93,42 +91,10 @@ namespace math
 	{
 		std::string source = this->to_string();
 		std::vector<Function*> simplified_components;
-		int constant = 0;
 		std::vector<Function*> new_components;
-		std::vector<Fraction*> fractions;
-		std::map<std::string, int> variables_sum;
 		Step step(source, source, source);
 		std::vector<Function*> owned_components = take_components();
-
-		std::function<void(Function*)> collect_component = [&](Function* node)
-		{
-			switch(node->get_type()) {
-				case Type::Sum: {
-					std::vector<Function*> nested_components = static_cast<Sum*>(node)->take_components();
-					for(Function* c : nested_components) {
-						collect_component(c);
-					}
-					delete node;
-					break;
-				}
-
-				case Type::Number:
-					constant += static_cast<Number*>(node)->number;
-					break;
-
-				case Type::Fraction:
-					fractions.push_back(static_cast<Fraction*>(node));
-					break;
-
-				case Type::Variable:
-					variables_sum[static_cast<Variable*>(node)->name] += static_cast<Variable*>(node)->number;
-					break;
-
-				default:
-					new_components.push_back(node);
-					break;
-			}
-		};
+		SumAccumulation acc;
 
 		for(Function* component : owned_components) {
 			SimplifyResult simplified = simplify_owned_child(component);
@@ -136,34 +102,34 @@ namespace math
 				step.AddChild(std::move(simplified.step));
 			}
 			simplified_components.push_back(simplified.function);
-			collect_component(simplified.function);
+			collect_component(simplified.function, acc, new_components);
 		}
 
 		Sum mid_sum(simplified_components);
 		step.SetMidStep(mid_sum.to_string());
 
-		if(!fractions.empty() && constant != 0) {
-			fractions.push_back(new Fraction(
-				new Number(constant),
+		if(!acc.fractions.empty() && acc.constant != 0) {
+			acc.fractions.push_back(new Fraction(
+				new Number(acc.constant),
 				new Number(1)
 			));
-			constant = 0;
+			acc.constant = 0;
 		}
 
-		if(fractions.size() > 1 && Fraction::make_common_denominator(fractions)) {
-			Function* merged = Fraction::consume_fractions_for_sum(fractions);
+		if(acc.fractions.size() > 1 && Fraction::make_common_denominator(acc.fractions)) {
+			Function* merged = Fraction::consume_fractions_for_sum(acc.fractions);
 			if(merged != nullptr) {
 				merged = merged->simplify().function;
 				new_components.push_back(merged);
-				fractions.clear();
+				acc.fractions.clear();
 			}
 		}
 
-		for(Fraction* fraction : fractions) {
+		for(Fraction* fraction : acc.fractions) {
 			new_components.push_back(fraction);
 		}
 
-		for(const auto& p : variables_sum) {
+		for(const auto& p : acc.variables_sum) {
 			if(p.second > 0) {
 				new_components.push_back(new Variable(p.first, p.second));
 			}
@@ -175,13 +141,13 @@ namespace math
 			}
 		}
 
-		if(constant > 0 || (constant == 0 && new_components.empty())) {
-			new_components.push_back(new Number(constant));
+		if(acc.constant > 0 || (acc.constant == 0 && new_components.empty())) {
+			new_components.push_back(new Number(acc.constant));
 		}
-		else if(constant < 0) {
+		else if(acc.constant < 0) {
 			new_components.push_back(new Product(std::vector<Function*>{
 				new Number(-1),
-				new Number(-constant)
+				new Number(-acc.constant)
 			}));
 		}
 
@@ -199,5 +165,34 @@ namespace math
 		}
 
 		return SimplifyResult(result, std::move(final_step));
+	}
+
+	void Sum::collect_component(Function* node, SumAccumulation& acc, std::vector<Function*>& new_components) {
+		switch(node->get_type()) {
+				case Type::Sum: {
+					std::vector<Function*> nested_components = static_cast<Sum*>(node)->take_components();
+					for(Function* c : nested_components) {
+						collect_component(c, acc, new_components);
+					}
+					delete node;
+					break;
+				}
+
+				case Type::Number:
+					acc.constant += static_cast<Number*>(node)->number;
+					break;
+
+				case Type::Fraction:
+					acc.fractions.push_back(static_cast<Fraction*>(node));
+					break;
+
+				case Type::Variable:
+					acc.variables_sum[static_cast<Variable*>(node)->name] += static_cast<Variable*>(node)->number;
+					break;
+
+				default:
+					new_components.push_back(node);
+					break;
+			}
 	}
 }

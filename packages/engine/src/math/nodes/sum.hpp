@@ -1,14 +1,26 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <map>
 
 #include "../function.hpp"
+#include "fraction.hpp"
 
 namespace math
 {
 	class Sum : public Function
 	{
 		std::vector<Function*> components;
+
+		struct SumAccumulation
+		{
+			int constant = 0;
+			std::vector<Fraction*> fractions;
+			std::map<std::string, int> variables_sum;
+			std::vector<Function*> other_components;
+		};
+
+		void collect_component(Function* node, SumAccumulation& acc, std::vector<Function*>& new_components);
 
 	public:
 		Sum(std::string sum);
