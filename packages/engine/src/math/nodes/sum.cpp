@@ -112,17 +112,7 @@ namespace math
 			new_components.push_back(fraction);
 		}
 
-		for(const auto& p : acc.variables_sum) {
-			if(p.second > 0) {
-				new_components.push_back(new Variable(p.first, p.second));
-			}
-			else if(p.second < 0) {
-				new_components.push_back(new Product(std::vector<Function*>{
-					new Number(-1),
-					new Variable(p.first, -p.second)
-				}));
-			}
-		}
+		append_variable_sums(new_components, acc.variables_sum);
 
 		if(acc.constant > 0 || (acc.constant == 0 && new_components.empty())) {
 			new_components.push_back(new Number(acc.constant));
@@ -196,6 +186,20 @@ namespace math
 				merged = merged->simplify().function;
 				new_components.push_back(merged);
 				acc.fractions.clear();
+			}
+		}
+	}
+
+	void Sum::append_variable_sums(std::vector<Function*>& out, const std::map<std::string, int>& variables_sum) {
+		for(const auto& p : variables_sum) {
+			if(p.second > 0) {
+				out.push_back(new Variable(p.first, p.second));
+			}
+			else if(p.second < 0) {
+				out.push_back(new Product(std::vector<Function*>{
+					new Number(-1),
+					new Variable(p.first, -p.second)
+				}));
 			}
 		}
 	}
