@@ -113,16 +113,7 @@ namespace math
 		}
 
 		append_variable_sums(new_components, acc.variables_sum);
-
-		if(acc.constant > 0 || (acc.constant == 0 && new_components.empty())) {
-			new_components.push_back(new Number(acc.constant));
-		}
-		else if(acc.constant < 0) {
-			new_components.push_back(new Product(std::vector<Function*>{
-				new Number(-1),
-				new Number(-acc.constant)
-			}));
-		}
+		append_constant_component(new_components, acc.constant);
 
 		Function* result = nullptr;
 		if(new_components.size() == 1) {
@@ -201,6 +192,18 @@ namespace math
 					new Variable(p.first, -p.second)
 				}));
 			}
+		}
+	}
+
+	void Sum::append_constant_component(std::vector<Function*>& out, int constant) {
+		if(constant > 0 || (constant == 0 && out.empty())) {
+			out.push_back(new Number(constant));
+		}
+		else if(constant < 0) {
+			out.push_back(new Product(std::vector<Function*>{
+				new Number(-1),
+				new Number(-constant)
+			}));
 		}
 	}
 }

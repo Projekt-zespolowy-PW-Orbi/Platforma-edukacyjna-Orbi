@@ -24,6 +24,7 @@ namespace math
 		void merge_constant_into_fractions(SumAccumulation& acc);
 		void merge_fraction_components(SumAccumulation& acc, std::vector<Function*>& new_components);
 		void append_variable_sums(std::vector<Function*>& out, const std::map<std::string, int>& variables_sum);
+		void append_constant_component(std::vector<Function*>& out, int constant);
 
 	public:
 		Sum(std::string sum);
