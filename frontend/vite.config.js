@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => {
         plugins: [react(), tsconfigPaths()],
         server: {
             proxy: {
-                "/double": apiUrl,
+                "/engine": apiUrl,
             },
         },
     };

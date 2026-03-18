@@ -2,6 +2,8 @@ import express, { type Express } from "express";
 import type { Kysely } from "kysely";
 import type { Database } from "infrastructure/database/types.js";
 
+import { EngineAdapter } from "infrastructure/engine.adapter.js";
+
 // Repositories
 import {
   ConceptRepository,
@@ -48,13 +50,18 @@ import {
 import { ConceptController } from "presentation/controllers/concept.controller.js";
 import { SentenceController } from "presentation/controllers/sentence.controller.js";
 import { AlgorithmController } from "presentation/controllers/algorithm.controller.js";
+import { SimplifyController } from "presentation/controllers/simplify.controller.js";
 
 // Routes
 import { createConceptRouter } from "presentation/routes/concept.route.js";
 import { createSentenceRouter } from "presentation/routes/sentence.route.js";
 import { createAlgorithmRouter } from "presentation/routes/algorithm.route.js";
+import { createSimplifyRouter } from "presentation/routes/simplify.route.js";
+import { SimplifyUseCase } from "application/use-cases/engine/simplify.use-case.js";
 
 export function buildApp(db: Kysely<Database>): Express {
+  const engine = new EngineAdapter();
+
   // Initialize repositories
   const conceptRepo = new ConceptRepository(db);
   const sentenceRepo = new SentenceRepository(db);
@@ -89,6 +96,8 @@ export function buildApp(db: Kysely<Database>): Express {
   const removeStepFromAlgorithmUseCase = new RemoveStepFromAlgorithmUseCase(algorithmRepo);
   const getAlgorithmStepsUseCase = new GetAlgorithmStepsUseCase(algorithmRepo);
 
+  const simplifyUseCase = new SimplifyUseCase(engine);
+
   // Initialize controllers
   const conceptController = new ConceptController(
     createConceptUseCase,
@@ -122,10 +131,13 @@ export function buildApp(db: Kysely<Database>): Express {
     getAlgorithmStepsUseCase
   );
 
+  const simplifyController = new SimplifyController(simplifyUseCase);
+
   // Create routers
   const conceptRouter = createConceptRouter(conceptController);
   const sentenceRouter = createSentenceRouter(sentenceController);
   const algorithmRouter = createAlgorithmRouter(algorithmController);
+  const simplifyRouter = createSimplifyRouter(simplifyController);
 
   const app = express();
   app.use(express.json());
@@ -135,6 +147,7 @@ export function buildApp(db: Kysely<Database>): Express {
   app.use("/api", conceptRouter);
   app.use("/api", sentenceRouter);
   app.use("/api", algorithmRouter);
+  app.use("/engine", simplifyRouter);
 
   return app;
 }

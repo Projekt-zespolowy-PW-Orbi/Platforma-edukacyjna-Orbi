@@ -13,7 +13,7 @@ export function App() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/simplify", {
+      const res = await fetch("/engine/simplify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ x: "2 * a + 2 * a" }),
