@@ -2,7 +2,7 @@ import { useState } from "react";
 import DragAndDropQuiz from "features/quiz/dragAndDrop/DragAndDropQuiz";
 import MatchingLinesQuiz from "features/quiz/matchingLines/MatchingLinesQuiz";
 import TrueFalseQuiz from "features/quiz/trueFalse/TrueFalseQuiz";
-
+import SelectTrueQuiz from "features/quiz/selectTrue/SelectTrueQuiz";
 interface DoubleResponse {
   result: number;
 }
@@ -42,6 +42,7 @@ export function App() {
       <DragAndDropQuiz />
       <MatchingLinesQuiz />
       <TrueFalseQuiz />
+      <SelectTrueQuiz />
     </div>
   );
 }
