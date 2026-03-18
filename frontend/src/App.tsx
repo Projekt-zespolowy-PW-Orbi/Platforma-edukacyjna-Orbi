@@ -26,7 +26,6 @@ export function App() {
       if (!res.ok) throw new Error(`HTTP ${String(res.status)}`);
       const data = (await res.json()) as SimplifyResponse;
       setSimplifyResult(data.result);
-      console.log(data.result);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
     } finally {
