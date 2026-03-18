@@ -1,26 +1,27 @@
 import { useState } from "react";
 import DragAndDropQuiz from "features/quiz/dragAndDrop/DragAndDropQuiz";
-interface DoubleResponse {
-  result: number;
+interface SimplifyResponse {
+  result: string;
 }
 
 export function App() {
-  const [result, setResult] = useState<number | null>(null);
+  const [simplifyResult, setSimplifyResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleDouble() {
+  async function handleSimplify() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/double", {
+      const res = await fetch("/simplify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ x: 1 }),
+        body: JSON.stringify({ x: "2 * a + 2 * a" }),
       });
       if (!res.ok) throw new Error(`HTTP ${String(res.status)}`);
-      const data = (await res.json()) as DoubleResponse;
-      setResult(data.result);
+      const data = (await res.json()) as SimplifyResponse;
+      setSimplifyResult(data.result);
+      console.log(data.result);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
     } finally {
@@ -31,10 +32,10 @@ export function App() {
   return (
     <div>
       <h1>Orbi</h1>
-      <button onClick={handleDouble} disabled={loading}>
+      <button onClick={handleSimplify} disabled={loading}>
         {loading ? "Loading..." : "Double 1"}
       </button>
-      {result !== null && <p data-testid="result">Result: {result}</p>}
+      {simplifyResult !== null && <p data-testid="result">Result: {simplifyResult}</p>}
       {error && <p data-testid="error">Error: {error}</p>}
       <DragAndDropQuiz />
     </div>
