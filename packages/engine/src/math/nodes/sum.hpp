@@ -22,6 +22,7 @@ namespace math
 
 		void collect_component(Function* node, SumAccumulation& acc, std::vector<Function*>& new_components);
 		void merge_constant_into_fractions(SumAccumulation& acc);
+		void merge_fraction_components(SumAccumulation& acc, std::vector<Function*>& new_components);
 
 	public:
 		Sum(std::string sum);

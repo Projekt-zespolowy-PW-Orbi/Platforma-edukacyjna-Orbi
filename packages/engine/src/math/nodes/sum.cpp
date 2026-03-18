@@ -108,17 +108,6 @@ namespace math
 		Sum mid_sum(simplified_components);
 		step.SetMidStep(mid_sum.to_string());
 
-		
-
-		if(acc.fractions.size() > 1 && Fraction::make_common_denominator(acc.fractions)) {
-			Function* merged = Fraction::consume_fractions_for_sum(acc.fractions);
-			if(merged != nullptr) {
-				merged = merged->simplify().function;
-				new_components.push_back(merged);
-				acc.fractions.clear();
-			}
-		}
-
 		for(Fraction* fraction : acc.fractions) {
 			new_components.push_back(fraction);
 		}
@@ -197,6 +186,17 @@ namespace math
 				new Number(1)
 			));
 			acc.constant = 0;
+		}
+	}
+
+	void Sum::merge_fraction_components(SumAccumulation& acc, std::vector<Function*>& new_components) {
+		if(acc.fractions.size() > 1 && Fraction::make_common_denominator(acc.fractions)) {
+			Function* merged = Fraction::consume_fractions_for_sum(acc.fractions);
+			if(merged != nullptr) {
+				merged = merged->simplify().function;
+				new_components.push_back(merged);
+				acc.fractions.clear();
+			}
 		}
 	}
 }
