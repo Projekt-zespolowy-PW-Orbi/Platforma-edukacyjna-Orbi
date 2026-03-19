@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <numeric>
+#include <utility>
 
 #include "../common.hpp"
 #include "../node_utils.hpp"
@@ -289,32 +290,54 @@ namespace math
 		return new Fraction(numerator, denumerator);
 	}
 
-	void Fraction::print(std::ostream &os, int depth) const
+	void Fraction::print_json(std::ostream &os, int depth) const
 	{
 		std::stringstream ss;
-		Function::print(ss, depth);
+		Function::print_json(ss, depth);
 		print_tabs(ss, depth);
 		ss << "{\n";
-		this->numerator->print(ss, depth + 1);
-		this->denumerator->print(ss, depth + 1);
+		this->numerator->print_json(ss, depth + 1);
+		this->denumerator->print_json(ss, depth + 1);
 		erase_comma_if_last(ss);
 		print_tabs(ss, depth);
 		ss << "},\n";
 		os << ss.str();
 	}
 
-	Function* Fraction::simplify()
+	void Fraction::print_tex(std::ostream &os) const
 	{
-		simplify_owned_child(this->numerator);
-		simplify_owned_child(this->denumerator);
-		
-		Function* reduced = reduce();
-		if(reduced != this) {
-			this->numerator = nullptr;
-			this->denumerator = nullptr;
-			delete this;
+		os << "\\frac";
+		os << "{";
+		os << *this->numerator;
+		os << "}{";
+		os << *this->denumerator;
+		os << "}";
+	}
+
+	SimplifyResult Fraction::simplify()
+	{
+		std::string source = this->to_string();
+		Step step(source, source, source);
+
+		SimplifyResult numerator_result = simplify_owned_child(this->numerator);
+		if(numerator_result.step.HasDetails()) {
+			step.AddChild(std::move(numerator_result.step));
 		}
 
-		return reduced;
+		SimplifyResult denumerator_result = simplify_owned_child(this->denumerator);
+		if(denumerator_result.step.HasDetails()) {
+			step.AddChild(std::move(denumerator_result.step));
+		}
+
+		step.SetMidStep(this->to_string());
+		
+		//Function* reduced = reduce();
+
+		Step final_step(source, step.GetMidStep(), to_string());
+		for(const Step& child : step.GetChildren()) {
+			final_step.AddChild(child);
+		}
+
+		return SimplifyResult(this, std::move(final_step));
 	}
 }

@@ -1,9 +1,10 @@
 #include "function.hpp"
 
 #include <algorithm>
+#include <sstream>
+#include <cxxabi.h>
 #include <typeinfo>
 #include <vector>
-#include <cxxabi.h>
 
 #include "common.hpp"
 #include "parser.hpp"
@@ -80,15 +81,24 @@ namespace math
 		return f_type;
 	}
 
-	void Function::print(std::ostream &os, int depth) const
+	void Function::print_json(std::ostream &os, int depth) const
 	{
 		while(depth--) os << '\t';
 		os << '"' <<abi::__cxa_demangle(typeid(*this).name(), 0, 0, 0) << '"' << ":\n";
 	}
 
+	std::string Function::to_string() const
+	{
+		std::ostringstream os;
+		print_tex(os);
+		return os.str();
+	}
+
 	std::ostream &operator<<(std::ostream &os, const Function &s)
 	{
-		s.print(os);
+		if (Function::PRINT_METHOD == PrintMethod::JSON)
+			s.print_json(os);
+		else s.print_tex(os);
 		return os;
 	}
 }

@@ -17,15 +17,20 @@ namespace math
 		}
 	}
 
-	void Number::print(std::ostream &os, int depth) const
+	void Number::print_json(std::ostream &os, int depth) const
 	{
 		while(depth--) os << '\t';
 		os << this->number << "," << std::endl;
 	}
 
+	void Number::print_tex(std::ostream &os) const
+	{
+		os << this->number;
+	}
+
 	Basic::Basic() {}
 
-	void Basic::print(std::ostream &os, int depth) const
+	void Basic::print_json(std::ostream &os, int depth) const
 	{
 		(void)os;
 		(void)depth;

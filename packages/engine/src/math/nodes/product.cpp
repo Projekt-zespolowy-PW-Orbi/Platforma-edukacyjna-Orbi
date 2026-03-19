@@ -3,6 +3,7 @@
 #include <map>
 #include <sstream>
 #include <functional>
+#include <utility>
 
 #include "../common.hpp"
 #include "../node_utils.hpp"
@@ -62,26 +63,40 @@ namespace math
 		return taken;
 	}
 
-	void Product::print(std::ostream &os, int depth) const
+	void Product::print_json(std::ostream &os, int depth) const
 	{
 		std::stringstream ss;
-		Function::print(ss, depth);
+		Function::print_json(ss, depth);
 		print_tabs(ss, depth);
 		ss << "{\n";
-		for(auto p : this->products) p->print(ss, depth + 1);
+		for(auto p : this->products) p->print_json(ss, depth + 1);
 		erase_comma_if_last(ss);
 		print_tabs(ss, depth);
 		ss << "},\n";
 		os << ss.str();
 	}
 
-	Function* Product::simplify()
+	void Product::print_tex(std::ostream &os) const
 	{
+		for(int i = 0; i < this->products.size(); i++) {
+			if(products[i]->get_type() == Type::Sum) os << "(";
+			os << *products[i];
+			if(products[i]->get_type() == Type::Sum) os << ")";
+			if(i != this->products.size() - 1) os << " * ";
+		}
+	}
+
+	SimplifyResult Product::simplify()
+	{
+		std::string source = this->to_string();
+		std::vector<Function*> simplified_products;
 		int constant = 1;
 		std::map<std::string, int> powers;
 		std::vector<Function*> new_products;
 		std::vector<Fraction*> fractions;
 		std::vector<Function*> owned_products = take_products();
+		Step step(source, source, source);
+		Function* result = nullptr;
 
 		std::function<void(Function*)> collect_factor = [&](Function* node)
 		{
@@ -118,19 +133,21 @@ namespace math
 		};
 
 		for(Function*& p : owned_products) {
-			simplify_owned_child(p);
+			SimplifyResult simplified = simplify_owned_child(p);
+			if(simplified.step.HasDetails()) {
+				step.AddChild(std::move(simplified.step));
+			}
 			collect_factor(p);
 		}
 
 		if (constant == 0) {
-			delete this;
-			return new Number(0);
+			result = new Number(0);
 		}
 
 		if(!fractions.empty()) {
 			Function* merged_fraction = Fraction::consume_fractions_for_product(fractions, constant);
 			if(merged_fraction != nullptr) {
-				merged_fraction = merged_fraction->simplify();
+				merged_fraction = merged_fraction->simplify().function;
 				new_products.push_back(merged_fraction);
 				fractions.clear();
 				constant = 1;
@@ -140,61 +157,64 @@ namespace math
 		if(new_products.empty()) {
 			if(powers.size() == 1) {
 				if(powers.begin()->second == 1) {
-					Function* result = new Variable(powers.begin()->first, constant);
-					delete this;
-					return result;
+					result = new Variable(powers.begin()->first, constant);
+					result = result;
 				}
 				else {
 					if(constant == 1) {
-						Function* result = new Exponential(
+						result = new Exponential(
 							new Variable(powers.begin()->first, 1),
 							new Number(powers.begin()->second)
 						);
-						delete this;
-						return result;
-					}
-		
-					Function* result = new Product(std::vector<Function*>{
-						new Number(constant),
-						new Exponential(
-							new Variable(powers.begin()->first, 1),
-							new Number(powers.begin()->second)
-						)
-					});
-					delete this;
-					return result;
+					} else {
+						Function* result = new Product(std::vector<Function*>{
+							new Number(constant),
+							new Exponential(
+								new Variable(powers.begin()->first, 1),
+								new Number(powers.begin()->second)
+							)
+						});
+					}					
 				}
 			}
 			else if(powers.empty()) {
-				delete this;
-				return new Number(constant);
+				result = new Number(constant);
 			}
 		}
 
-		if(constant != 1 || new_products.empty()) {
-			new_products.push_back(new Number(constant));
-		}
+		if(!result) {
+			Product mid_product(new_products);
+			step.SetMidStep(mid_product.to_string());
 
-		for(const auto& p : powers) {
-			if(p.second == 1) {
-				new_products.push_back(new Variable(p.first, 1));
+			if(constant != 1 || new_products.empty()) {
+				new_products.push_back(new Number(constant));
+			}
+
+			for(const auto& p : powers) {
+				if(p.second == 1) {
+					new_products.push_back(new Variable(p.first, 1));
+				}
+				else {
+					new_products.push_back(new Exponential(
+						new Variable(p.first, 1),
+						new Number(p.second)
+					));
+				}
+			}
+			
+			if(new_products.size() == 1) {
+				result = new_products[0];
 			}
 			else {
-				new_products.push_back(new Exponential(
-					new Variable(p.first, 1),
-					new Number(p.second)
-				));
+				result = new Product(new_products);
 			}
 		}
-		Function* result = nullptr;
-		if(new_products.size() == 1) {
-			result = new_products[0];
-		}
-		else {
-			result = new Product(new_products);
+
+		Step final_step(source, step.GetMidStep(), result->to_string());
+		for(const Step& child : step.GetChildren()) {
+			final_step.AddChild(child);
 		}
 
-		delete this;
-		return result;
+		return SimplifyResult(result, std::move(final_step));
 	}
 }

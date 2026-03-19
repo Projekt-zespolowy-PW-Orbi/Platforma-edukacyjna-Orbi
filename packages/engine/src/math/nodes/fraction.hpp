@@ -28,8 +28,9 @@ namespace math
 		Function* split_numerator_sum();
 		static Fraction* consume_fractions_for_product(std::vector<Fraction*>& fractions, int constant_factor);
 
-		virtual void print(std::ostream& os, int depth = 0) const override;
-		virtual Function* simplify() override;
+		virtual void print_json(std::ostream& os, int depth = 0) const override;
+		virtual void print_tex(std::ostream& os) const override;
+		virtual SimplifyResult simplify() override;
 		Type get_type() override { return Type::Fraction; }
 
 	private:

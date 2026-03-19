@@ -3,6 +3,7 @@
 #include <map>
 #include <sstream>
 #include <functional>
+#include <utility>
 
 #include "../common.hpp"
 #include "../function.hpp"
@@ -66,13 +67,13 @@ namespace math
 		return taken;
 	}
 
-	void Sum::print(std::ostream &os, int depth) const
+	void Sum::print_json(std::ostream &os, int depth) const
 	{
 		std::stringstream ss;
-		Function::print(ss, depth);
+		Function::print_json(ss, depth);
 		print_tabs(ss, depth);
 		ss << "{\n";
-		for(auto f : this->components) f->print(ss, depth + 1);
+		for(auto f : this->components) f->print_json(ss, depth + 1);
 		erase_comma_if_last(ss);
 		print_tabs(ss, depth);
 		ss << "},\n";
@@ -80,12 +81,23 @@ namespace math
 
 	}
 
-	Function* Sum::simplify()
+	void Sum::print_tex(std::ostream &os) const
 	{
+		for(int i = 0; i < this->components.size(); i++) {
+			os << *components[i];
+			if(i != this->components.size() - 1) os << " + ";
+		}
+	}
+
+	SimplifyResult Sum::simplify()
+	{
+		std::string source = this->to_string();
+		std::vector<Function*> simplified_components;
 		int constant = 0;
 		std::vector<Function*> new_components;
 		std::vector<Fraction*> fractions;
 		std::map<std::string, int> variables_sum;
+		Step step(source, source, source);
 		std::vector<Function*> owned_components = take_components();
 
 		std::function<void(Function*)> collect_component = [&](Function* node)
@@ -118,10 +130,17 @@ namespace math
 			}
 		};
 
-		for(Function*& component : owned_components) {
-			simplify_owned_child(component);
-			collect_component(component);
+		for(Function* component : owned_components) {
+			SimplifyResult simplified = simplify_owned_child(component);
+			if(simplified.step.HasDetails()) {
+				step.AddChild(std::move(simplified.step));
+			}
+			simplified_components.push_back(simplified.function);
+			collect_component(simplified.function);
 		}
+
+		Sum mid_sum(simplified_components);
+		step.SetMidStep(mid_sum.to_string());
 
 		if(!fractions.empty() && constant != 0) {
 			fractions.push_back(new Fraction(
@@ -134,7 +153,7 @@ namespace math
 		if(fractions.size() > 1 && Fraction::make_common_denominator(fractions)) {
 			Function* merged = Fraction::consume_fractions_for_sum(fractions);
 			if(merged != nullptr) {
-				merged = merged->simplify();
+				merged = merged->simplify().function;
 				new_components.push_back(merged);
 				fractions.clear();
 			}
@@ -174,7 +193,11 @@ namespace math
 			result = new Sum(new_components);
 		}
 
-		delete this;
-		return result;
+		Step final_step(source, step.GetMidStep(), result->to_string());
+		for(const Step& child : step.GetChildren()) {
+			final_step.AddChild(child);
+		}
+
+		return SimplifyResult(result, std::move(final_step));
 	}
 }
