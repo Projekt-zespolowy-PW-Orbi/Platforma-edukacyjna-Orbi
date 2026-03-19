@@ -79,8 +79,31 @@ namespace math
 
 	SimplifyResult Exponential::simplify()
 	{
-		simplify_owned_child(this->base);
-		simplify_owned_child(this->power);
+		std::string source = this->to_string();
+		Step step(source, source, source);
+		SimplifyResult sr = simplify_owned_child(this->base);
+		if(sr.step.HasDetails()) {
+			step.AddChild(std::move(sr.step));
+		}
+		sr = simplify_owned_child(this->power);
+		if(sr.step.HasDetails()) {
+			step.AddChild(std::move(sr.step));
+		}
+
+		step.SetMidStep(this->to_string());
+
+		if(this->base->get_type() == Type::Number && this->power->get_type() == Type::Number) {
+			Number* number = static_cast<Number*>(this->base);
+			int j = 1;
+			for(int i = 0; i < static_cast<Number*>(this->power)->number; i++) {
+				
+				j *= number->number;
+
+			}
+			step.SetResult(std::to_string(j));
+			return SimplifyResult(new Number(j), step);
+		}
+
 		return SimplifyResult(this, Step());
 	}
 }

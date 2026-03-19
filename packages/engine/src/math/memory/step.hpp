@@ -24,6 +24,7 @@ namespace math {
 		std::string to_json() const;
 
 		inline void SetMidStep(std::string value) { mid_step = std::move(value); }
+		inline void SetResult(std::string result) { this->result = std::move(result); }
 		inline bool HasMidStep() const { return !mid_step.empty() && mid_step != source; }
 		inline void AddChild(const Step& child) { children.push_back(child); }
 		inline void AddChild(Step&& child) { children.push_back(std::move(child)); }
