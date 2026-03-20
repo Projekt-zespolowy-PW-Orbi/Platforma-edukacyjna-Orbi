@@ -2,10 +2,13 @@
 #include "math/parser.hpp"
 #include "utils/ostream.hpp"
 #include "utils/json.hpp"
+#include "config.hpp"
 
 #include <iostream>
 #include <string>
 #include <vector>
+
+bool is_debug = false;
 
 int main(int argc, char *argv[]) {
     // Default to JSON mode (for backward compatibility)
