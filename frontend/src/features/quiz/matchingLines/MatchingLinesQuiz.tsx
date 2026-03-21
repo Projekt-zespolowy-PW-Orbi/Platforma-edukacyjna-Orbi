@@ -19,13 +19,17 @@ export default function MatchingLinesQuiz() {
   const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
   const [connections, setConnections] = useState<Connection[]>([]);
   const [result, setResult] = useState<"correct" | "wrong" | null>(null);
+  const [showResult, setShowResult] = useState(false);
+  const [showCorrectAnswers, setShowCorrectAnswers] = useState(false);
 
   const handleLeftClick = (item: string) => {
+    if (showCorrectAnswers) return;
     if (connections.some((c) => c.left === item)) return;
     setSelectedLeft(item);
   };
 
   const handleRightClick = (item: string) => {
+    if (showCorrectAnswers) return;
     if (!selectedLeft) return;
 
     if (connections.some((c) => c.right === item)) return;
@@ -41,11 +45,25 @@ export default function MatchingLinesQuiz() {
       connections.every((c) => correctPairs[c.left] === c.right);
 
     setResult(isCorrect ? "correct" : "wrong");
+    setShowResult(true);
+  };
+
+  const handleShowAnswers = () => {
+    const correctConnections = leftItems.map((left) => ({
+      left,
+      right: correctPairs[left],
+    }));
+
+    setConnections(correctConnections);
+    setShowCorrectAnswers(true);
   };
 
   const resetQuiz = () => {
     setConnections([]);
     setSelectedLeft(null);
+    setResult(null);
+    setShowResult(false);
+    setShowCorrectAnswers(false);
   };
 
   return (
@@ -123,14 +141,19 @@ export default function MatchingLinesQuiz() {
         </button>
       </div>
 
-      {result === "correct" && (
-        <div className="quiz-result success">
-          Brawo! Wszystkie odpowiedzi poprawne.
-        </div>
-      )}
+      {showResult && (
+        <div className="quiz-result-overlay">
+          <div className="quiz-result-box">
+            <h2>{result === "correct" ? "Dobrze!" : "Spróbuj jeszcze raz"}</h2>
 
-      {result === "wrong" && (
-        <div className="quiz-result error">Niektóre odpowiedzi są błędne.</div>
+            <div className="buttons">
+              <button onClick={resetQuiz}>Reset</button>
+              <button onClick={handleShowAnswers}>
+                Pokaż poprawne odpowiedzi
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

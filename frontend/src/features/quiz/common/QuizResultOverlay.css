@@ -1,0 +1,26 @@
+.quiz-result-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 9999; /* ważne – nad wszystkim */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.quiz-result-box {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.buttons {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
