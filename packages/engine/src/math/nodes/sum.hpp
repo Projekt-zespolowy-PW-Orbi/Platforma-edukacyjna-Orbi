@@ -30,7 +30,6 @@ namespace math
 	public:
 		Sum(std::string sum);
 		Sum(std::vector<Function*> components) : components(components) {}
-		~Sum() override;
 		
 		std::vector<Function*> take_components();
 

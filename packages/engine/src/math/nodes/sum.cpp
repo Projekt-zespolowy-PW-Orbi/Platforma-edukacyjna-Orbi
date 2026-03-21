@@ -51,13 +51,6 @@ namespace math
 		this->components = components;
 	}
 
-	Sum::~Sum()
-	{
-		for(Function* component : this->components) {
-			delete component;
-		}
-	}
-
 	std::vector<Function*> Sum::take_components()
 	{
 		std::vector<Function*> taken = this->components;
@@ -134,7 +127,6 @@ namespace math
 					for(Function* c : nested_components) {
 						collect_component(c, acc, new_components);
 					}
-					delete node;
 					break;
 				}
 
