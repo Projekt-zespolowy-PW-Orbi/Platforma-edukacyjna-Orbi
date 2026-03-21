@@ -222,8 +222,8 @@ namespace math
 	std::string PaperArithmetic::print_json() const
 	{
 		std::stringstream ss;
-		const char* type_label = (operation == PaperOperation::Multiply) ? "paper_multiply" : "paper_add";
-		ss << "{\"type\":\"" << type_label << "\",\"a\":\"" << operand_a << "\",\"b\":\"" << operand_b
+		const char* op_label = (operation == PaperOperation::Multiply) ? "paper_multiply" : "paper_add";
+		ss << "{\"op\":\"" << op_label << "\",\"a\":\"" << operand_a << "\",\"b\":\"" << operand_b
 		   << "\",\"digits\":" << to_json(result.digits)
 		   << ",\"carries\":" << to_json(result.carries) << '}';
 		return ss.str();

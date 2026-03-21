@@ -1,12 +1,11 @@
 #include "json.hpp"
 #include "math/function.hpp"
+#include "math/nodes/paper_arithmetic.hpp"
 #include "math/parser.hpp"
 #include "utils/ostream.hpp"
-#include "utils/json.hpp"
 #include "math/common.hpp"
 
 #include <iostream>
-#include <vector>
 #include <unordered_map>
 #include <functional>
 #include <sstream>
@@ -49,7 +48,6 @@ static long long extract_number(const std::string& json, const std::string& key)
 	pos = json.find(':', pos + search.size());
 	if (pos == std::string::npos) return 0;
 
-	// skip whitespace
 	pos++;
 	while (pos < json.size() && (json[pos] == ' ' || json[pos] == '\t')) pos++;
 
@@ -61,9 +59,23 @@ static long long extract_number(const std::string& json, const std::string& key)
 
 	return std::stoll(num_str);
 }
-// JSON mode: process one JSON command and exit
+
+static void json_paper_op(const std::string& line, const std::string& id, math::PaperOperation op,
+	const char* err_msg)
+{
+	std::string a = extract_string(line, "a");
+	std::string b = extract_string(line, "b");
+	math::PaperArithmetic paper(std::move(a), std::move(b), op);
+	paper.simplify();
+	if (!paper.get_result().valid) {
+		std::cout << "{\"id\":\"" << id << "\",\"ok\":false,\"error\":\"" << err_msg << "\"}" << std::endl;
+		return;
+	}
+	std::string json = paper.print_json();
+	std::cout << "{\"id\":\"" << id << "\",\"ok\":true," << json.substr(1) << std::endl;
+}
+
 int json_mode() {
-	// Read exactly one line from stdin, process it, and exit
 	std::string line;
 	if (!std::getline(std::cin, line)) {
 		return 1;
@@ -94,6 +106,16 @@ int json_mode() {
 				std::cout << "{\"id\":\"" << id << "\",\"ok\":true,\"result\":\"" << escaped << "\"}" << std::endl;
 			}
 		},
+		{
+			"paper_add", [&line, &id] {
+				json_paper_op(line, id, math::PaperOperation::Add, "invalid paper_add operands");
+			}
+		},
+		{
+			"paper_multiply", [&line, &id] {
+				json_paper_op(line, id, math::PaperOperation::Multiply, "invalid paper_multiply operands");
+			}
+		},
 	};
 
 	if (auto it = action.find(op); it != action.end())
@@ -102,7 +124,6 @@ int json_mode() {
 	return 0;
 }
 
-// Parser mode: interactive math expression parser
 int parser_mode() {
 	std::string input;
 	std::stringstream ss;
@@ -122,7 +143,6 @@ int parser_mode() {
 			input = input.substr(3);
 		}
 		
-		// Remove any leading whitespace/invisible chars
 		while(!input.empty() && (input[0] == ' ' || input[0] == '\t' || (unsigned char)input[0] > 127)) {
 			input = input.substr(1);
 		}
