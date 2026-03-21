@@ -8,16 +8,28 @@ const isWindows = process.platform === "win32";
 const binaryName = isWindows ? "orbi-engine.exe" : "orbi-engine";
 const enginePath = resolve(__dirname, "../../../build", binaryName);
 
+export type PaperOpKind = "paper_add" | "paper_multiply";
+
 export type EngineResponse = {
   id: string;
   ok: boolean;
   result?: string;
+  op?: PaperOpKind;
+  a?: string;
+  b?: string;
+  digits?: number[][];
+  carries?: number[][];
   error?: string;
 };
 
 export type ExpectedSimplifyResult =
   | { kind: "number"; value: number }
   | { kind: "string"; value: string };
+
+export type ExpectedPaperMatrix = {
+  digits: number[][];
+  carries: number[][];
+};
 
 const ENGINE_TIMEOUT_MS = 5_000;
 
@@ -102,4 +114,27 @@ export function expectResultToMatch(
       throw new Error(`Unhandled expected kind: ${(_exhaustive as ExpectedSimplifyResult).kind}`);
     }
   }
+}
+
+export function expectPaperMatrixToMatch(
+  response: EngineResponse,
+  expected: Omit<ExpectedPaperMatrix, "op">,
+  expectedOp: PaperOpKind,
+): void {
+  expect(response.ok).toBe(true);
+  expect(response.op).toBe(expectedOp);
+  expect(response.digits).toEqual(expected.digits);
+  expect(response.carries).toEqual(expected.carries);
+}
+
+export async function expectPaperOpToFail(
+  a: string,
+  b: string,
+  op: PaperOpKind,
+  expectedError: string,
+): Promise<void> {
+  const id = `${op}-err`;
+  const r = await sendRequest({ id, op, a, b });
+  expect(r.ok).toBe(false);
+  expect(r.error).toBe(expectedError);
 }
