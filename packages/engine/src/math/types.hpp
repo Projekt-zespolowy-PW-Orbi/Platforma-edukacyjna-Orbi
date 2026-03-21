@@ -2,6 +2,13 @@
 
 namespace math
 {
+	enum class PaperOperation
+	{
+		Add,
+		Subtract,
+		Multiply
+	};
+
 	enum class BasicFunction
 	{
 		NONE,
@@ -39,6 +46,7 @@ namespace math
 		Cotangens,
 		ArcusCotangens,
 		Variable,
-		Number
+		Number,
+		PaperArithmetic
 	};
 }
