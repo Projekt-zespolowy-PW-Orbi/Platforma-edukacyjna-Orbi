@@ -24,12 +24,7 @@ type SimplifySuite = {
 function runSimplifyCaseGroup(idPrefix: string, cases: SimplifyCase[]): void {
   for (const [index, testCase] of cases.entries()) {
     const runner = testCase.skip ? it.skip : it;
-    runner(testCase.name, async () => {
-      const id = `${idPrefix}-${index + 1}`;
-      const res = await sendRequest({ id, op: "simplify", x: testCase.input });
-      expect(res.id).toBe(id);
-      expectResultToMatch(res, testCase.expected);
-    });
+    runner(testCase.name, async () => { const id = `${idPrefix}-${index + 1}`; const res = await sendRequest({ id, op: "simplify", x: testCase.input }); expect(res.id).toBe(id); expectResultToMatch(res, testCase.expected); });
   }
 }
 
@@ -40,18 +35,9 @@ type PaperMatrixCase = {
   expected: { digits: number[][]; carries: number[][] };
 };
 
-function runPaperMatrixCaseGroup(
-  idPrefix: string,
-  op: PaperOpKind,
-  cases: PaperMatrixCase[],
-): void {
+function runPaperMatrixCaseGroup(idPrefix: string, op: PaperOpKind, cases: PaperMatrixCase[]): void {
   for (const [index, testCase] of cases.entries()) {
-    it(testCase.name, async () => {
-      const id = `${idPrefix}-${index + 1}`;
-      const res = await sendRequest({ id, op, a: testCase.a, b: testCase.b });
-      expect(res.id).toBe(id);
-      expectPaperMatrixToMatch(res, testCase.expected, op);
-    });
+    it(testCase.name, async () => { const id = `${idPrefix}-${index + 1}`; const res = await sendRequest({ id, op, a: testCase.a, b: testCase.b }); expect(res.id).toBe(id); expectPaperMatrixToMatch(res, testCase.expected, op); });
   }
 }
 
@@ -115,119 +101,23 @@ describe("orbi-engine simplify", () => {
 describe("orbi-engine paper arithmetic", () => {
   describe("paper_add", () => {
     runPaperMatrixCaseGroup("paper", "paper_add", [
-      {
-        name: "column addition without final carry",
-        a: "12",
-        b: "34",
-        expected: { digits: [[6, 4]], carries: [[0, 0]] },
-      },
-      {
-        name: "overflow extends result length",
-        a: "99",
-        b: "1",
-        expected: { digits: [[0, 0, 1]], carries: [[0, 1, 1]] },
-      },
-      {
-        name: "empty operand normalizes to zero",
-        a: "",
-        b: "5",
-        expected: { digits: [[5]], carries: [[0]] },
-      },
-      {
-        name: "leading zeros are stripped",
-        a: "007",
-        b: "003",
-        expected: { digits: [[0, 1]], carries: [[0, 1]] },
-      },
-      {
-        name: "wide operands and per-column carries",
-        a: "97901",
-        b: "92340",
-        expected: {
-          digits: [[1, 4, 2, 0, 9, 1]],
-          carries: [[0, 0, 0, 1, 1, 1]],
-        },
-      },
+      { name: "column addition without final carry", a: "12", b: "34", expected: { digits: [[6, 4]], carries: [[0, 0]] } },
+      { name: "overflow extends result length", a: "99", b: "1", expected: { digits: [[0, 0, 1]], carries: [[0, 1, 1]] } },
+      { name: "empty operand normalizes to zero", a: "", b: "5", expected: { digits: [[5]], carries: [[0]] } },
+      { name: "leading zeros are stripped", a: "007", b: "003", expected: { digits: [[0, 1]], carries: [[0, 1]] } },
+      { name: "wide operands and per-column carries", a: "97901", b: "92340", expected: { digits: [[1, 4, 2, 0, 9, 1]], carries: [[0, 0, 0, 1, 1, 1]] } },
     ]);
   });
 
   describe("paper_multiply", () => {
     runPaperMatrixCaseGroup("papmul", "paper_multiply", [
-      {
-        name: "two-digit multiplier with column sum",
-        a: "123",
-        b: "14",
-        expected: {
-          digits: [
-            [2, 9, 4],
-            [0, 3, 2, 1],
-            [2, 2, 7, 1],
-          ],
-          carries: [
-            [0, 1, 0],
-            [0, 0, 0, 0],
-            [0, 0, 1, 0],
-          ],
-        },
-      },
-      {
-        name: "single-digit multiplier copies partial into sum row",
-        a: "123",
-        b: "4",
-        expected: {
-          digits: [
-            [2, 9, 4],
-            [2, 9, 4],
-          ],
-          carries: [
-            [0, 1, 0],
-            [0, 1, 0],
-          ],
-        },
-      },
-      {
-        name: "wide multiply with many partials and final column sum",
-        a: "999",
-        b: "999",
-        expected: {
-          digits: [
-            [1, 9, 9, 8],
-            [0, 1, 9, 9, 8],
-            [0, 0, 1, 9, 9, 8],
-            [1, 0, 0, 8, 9, 9],
-          ],
-          carries: [
-            [0, 8, 8, 8],
-            [0, 0, 8, 8, 8],
-            [0, 0, 0, 8, 8, 8],
-            [0, 0, 1, 2, 2, 1],
-          ],
-        },
-      },
-      {
-        name: "empty multiplicand normalizes to zero",
-        a: "",
-        b: "5",
-        expected: { digits: [[0], [0]], carries: [[0], [0]] },
-      },
+      { name: "two-digit multiplier with column sum", a: "123", b: "14", expected: { digits: [[2, 9, 4], [0, 3, 2, 1], [2, 2, 7, 1]], carries: [[0, 1, 0], [0, 0, 0, 0], [0, 0, 1, 0]] } },
+      { name: "single-digit multiplier copies partial into sum row", a: "123", b: "4", expected: { digits: [[2, 9, 4], [2, 9, 4]], carries: [[0, 1, 0], [0, 1, 0]] } },
+      { name: "wide multiply with many partials and final column sum", a: "999", b: "999", expected: { digits: [[1, 9, 9, 8], [0, 1, 9, 9, 8], [0, 0, 1, 9, 9, 8], [1, 0, 0, 8, 9, 9]], carries: [[0, 8, 8, 8], [0, 0, 8, 8, 8], [0, 0, 0, 8, 8, 8], [0, 0, 1, 2, 2, 1]] } },
+      { name: "empty multiplicand normalizes to zero", a: "", b: "5", expected: { digits: [[0], [0]], carries: [[0], [0]] } },
     ]);
   });
 
-  it("paper_add rejects operands with non-digits", async () => {
-    await expectPaperOpToFail(
-      "12a",
-      "3",
-      "paper_add",
-      "invalid paper_add operands",
-    );
-  });
-
-  it("paper_multiply rejects operands with non-digits", async () => {
-    await expectPaperOpToFail(
-      "12a",
-      "3",
-      "paper_multiply",
-      "invalid paper_multiply operands",
-    );
-  });
+  it("paper_add rejects operands with non-digits", async () => { await expectPaperOpToFail("12a", "3", "paper_add", "invalid paper_add operands"); });
+  it("paper_multiply rejects operands with non-digits", async () => { await expectPaperOpToFail("12a", "3", "paper_multiply", "invalid paper_multiply operands"); });
 });
