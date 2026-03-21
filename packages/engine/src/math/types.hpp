@@ -46,7 +46,6 @@ namespace math
 		Cotangens,
 		ArcusCotangens,
 		Variable,
-		Number,
-		PaperArithmetic
+		Number
 	};
 }
