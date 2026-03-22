@@ -15,8 +15,9 @@ namespace math
 		Exponential(Function* base, Function* power) : base(base), power(power) {}
 		~Exponential() override;
 
-		virtual void print(std::ostream& os, int depth = 0) const override;
-		virtual Function* simplify() override;
+		virtual void print_json(std::ostream& os, int depth = 0) const override;
+		virtual void print_tex(std::ostream& os) const override;
+		virtual SimplifyResult simplify() override;
 		Type get_type() override { return Type::Exponential; }
 	};
 }

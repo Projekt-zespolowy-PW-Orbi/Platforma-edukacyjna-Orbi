@@ -1,8 +1,9 @@
 #include "product.hpp"
 
-#include <map>
 #include <sstream>
 #include <functional>
+#include <utility>
+#include <iostream>
 
 #include "../common.hpp"
 #include "../node_utils.hpp"
@@ -10,8 +11,8 @@
 #include "number.hpp"
 #include "variable.hpp"
 #include "exponential.hpp"
-#include "fraction.hpp"
 
+#include "config.hpp"
 
 namespace math
 {
@@ -36,6 +37,7 @@ namespace math
 				product += s;
 			}
 			else if(s == '*') {
+				if(is_debug) std::cout << product << std::endl;
 				if(!product.empty()) products.push_back(Function::convert(product));
 				product = "";
 			}
@@ -44,15 +46,11 @@ namespace math
 			}
 		}
 
-		if(!product.empty()) products.push_back(Function::convert(product));
+		if(!product.empty()) {
+			if(is_debug) std::cout << product << std::endl;
+			products.push_back(Function::convert(product));
+		} 
 		this->products = products;
-	}
-
-	Product::~Product()
-	{
-		for(Function* product : this->products) {
-			delete product;
-		}
 	}
 
 	std::vector<Function*> Product::take_products()
@@ -62,139 +60,203 @@ namespace math
 		return taken;
 	}
 
-	void Product::print(std::ostream &os, int depth) const
+	void Product::print_json(std::ostream &os, int depth) const
 	{
 		std::stringstream ss;
-		Function::print(ss, depth);
+		Function::print_json(ss, depth);
 		print_tabs(ss, depth);
 		ss << "{\n";
-		for(auto p : this->products) p->print(ss, depth + 1);
+		for(auto p : this->products) p->print_json(ss, depth + 1);
 		erase_comma_if_last(ss);
 		print_tabs(ss, depth);
 		ss << "},\n";
 		os << ss.str();
 	}
 
-	Function* Product::simplify()
+	void Product::print_tex(std::ostream &os) const
 	{
-		int constant = 1;
-		std::map<std::string, int> powers;
-		std::vector<Function*> new_products;
-		std::vector<Fraction*> fractions;
+		for(int i = 0; i < this->products.size(); i++) {
+			if(products[i]->get_type() == Type::Sum) os << "(";
+			os << *products[i];
+			if(products[i]->get_type() == Type::Sum) os << ")";
+			if(i != this->products.size() - 1) os << " * ";
+		}
+	}
+
+	SimplifyResult Product::simplify()
+	{
+		std::string source = this->to_string();
 		std::vector<Function*> owned_products = take_products();
+		std::vector<Function*> new_products;
+		Step step(source, source, source);
 
-		std::function<void(Function*)> collect_factor = [&](Function* node)
-		{
-			switch(node->get_type()) {
-				case Type::Product: {
-					std::vector<Function*> nested_products = static_cast<Product*>(node)->take_products();
-					for(Function* factor : nested_products) {
-						collect_factor(factor);
-					}
-					delete node;
-					break;
-				}
-
-				case Type::Number:
-					constant *= static_cast<Number*>(node)->number;
-					break;
-
-				case Type::Variable: {
-					Variable* var = static_cast<Variable*>(node);
-					constant *= var->number;
-					powers[var->name]++;
-					break;
-				}
-
-				case Type::Fraction: {
-					fractions.push_back(static_cast<Fraction*>(node));
-					break;
-				}
-
-				default:
-					new_products.push_back(node);
-					break;
-			}
-		};
+		ProductAccumulation acc;
 
 		for(Function*& p : owned_products) {
-			simplify_owned_child(p);
-			collect_factor(p);
+			SimplifyResult simplified = simplify_owned_child(p);
+			if(simplified.step.HasDetails()) {
+				step.AddChild(std::move(simplified.step));
+			}
+			collect_factor(p, acc);
 		}
 
-		if (constant == 0) {
-			delete this;
+		Function* result = build_simplified_result(acc, new_products, step);
+
+		return SimplifyResult(result, build_final_step(source, step, result));
+	}
+
+	Function* Product::build_power_factor(const std::string& name, int power)
+	{
+		if(power == 1) {
+			return new Variable(name, 1);
+		}
+
+		return new Exponential(
+			new Variable(name, 1),
+			new Number(power)
+		);
+	}
+
+	void Product::append_power_factors(std::vector<Function*>& out, const std::map<std::string, int>& powers)
+	{
+		for(const auto& [name, power] : powers) {
+			out.push_back(build_power_factor(name, power));
+		}
+	}
+
+	void Product::collect_factor(Function* node, ProductAccumulation& acc)
+	{
+		switch(node->get_type()) {
+			case Type::Product: {
+				std::vector<Function*> nested_products = static_cast<Product*>(node)->take_products();
+				for(Function* factor : nested_products) {
+					collect_factor(factor, acc);
+				}
+				delete node;
+				break;
+			}
+
+			case Type::Number:
+				acc.constant *= static_cast<Number*>(node)->number;
+				delete node;
+				break;
+
+			case Type::Variable: {
+				Variable* var = static_cast<Variable*>(node);
+				acc.constant *= var->number;
+				acc.powers[var->name]++;
+				delete node;
+				break;
+			}
+
+			case Type::Fraction:
+				acc.fractions.push_back(static_cast<Fraction*>(node));
+				break;
+
+			default:
+				acc.other_factors.push_back(node);
+				break;
+		}
+	}
+
+	Function* Product::try_build_simple_result(const ProductAccumulation& acc, const std::vector<Function*>& new_products)
+	{
+		if(acc.constant == 0) {
 			return new Number(0);
 		}
 
-		if(!fractions.empty()) {
-			Function* merged_fraction = Fraction::consume_fractions_for_product(fractions, constant);
-			if(merged_fraction != nullptr) {
-				merged_fraction = merged_fraction->simplify();
-				new_products.push_back(merged_fraction);
-				fractions.clear();
-				constant = 1;
-			}
+		if(!new_products.empty()) {
+			return nullptr;
 		}
 
-		if(new_products.empty()) {
-			if(powers.size() == 1) {
-				if(powers.begin()->second == 1) {
-					Function* result = new Variable(powers.begin()->first, constant);
-					delete this;
-					return result;
-				}
-				else {
-					if(constant == 1) {
-						Function* result = new Exponential(
-							new Variable(powers.begin()->first, 1),
-							new Number(powers.begin()->second)
-						);
-						delete this;
-						return result;
-					}
-		
-					Function* result = new Product(std::vector<Function*>{
-						new Number(constant),
-						new Exponential(
-							new Variable(powers.begin()->first, 1),
-							new Number(powers.begin()->second)
-						)
-					});
-					delete this;
-					return result;
-				}
+		if(acc.powers.size() == 1) {
+			const auto& [name, power] = *acc.powers.begin();
+
+			if(power == 1) {
+				return new Variable(name, acc.constant);
 			}
-			else if(powers.empty()) {
-				delete this;
-				return new Number(constant);
+
+			if(acc.constant == 1) {
+				return build_power_factor(name, power);
 			}
+
+			return new Product(std::vector<Function*>{
+				new Number(acc.constant),
+				build_power_factor(name, power)
+			});
+		} 
+		else if(acc.powers.empty()) {
+			return new Number(acc.constant);
 		}
 
-		if(constant != 1 || new_products.empty()) {
-			new_products.push_back(new Number(constant));
+		return nullptr;
+	}
+
+	void Product::merge_fraction_factors(ProductAccumulation& acc, std::vector<Function*>& new_products)
+	{
+		if(acc.fractions.empty()) {
+			return;
 		}
 
-		for(const auto& p : powers) {
-			if(p.second == 1) {
-				new_products.push_back(new Variable(p.first, 1));
-			}
-			else {
-				new_products.push_back(new Exponential(
-					new Variable(p.first, 1),
-					new Number(p.second)
-				));
-			}
+		Function* merged_fraction = Fraction::consume_fractions_for_product(acc.fractions, acc.constant);
+		if(merged_fraction == nullptr) {
+			return;
 		}
-		Function* result = nullptr;
+
+		merged_fraction = merged_fraction->simplify().function;
+		new_products.push_back(merged_fraction);
+		acc.fractions.clear();
+		acc.constant = 1;
+	}
+
+	void Product::append_accumulated_factors(ProductAccumulation& acc, std::vector<Function*>& new_products)
+	{
+		if(acc.constant != 1 || new_products.empty()) {
+			new_products.push_back(new Number(acc.constant));
+		}
+
+		append_power_factors(new_products, acc.powers);
+	}
+
+	Function* Product::build_result_from_factors(std::vector<Function*>& new_products)
+	{
 		if(new_products.size() == 1) {
-			result = new_products[0];
-		}
-		else {
-			result = new Product(new_products);
+			return new_products[0];
 		}
 
-		delete this;
-		return result;
+		return new Product(new_products);
+	}
+
+	Step Product::build_final_step(const std::string& source, const Step& step, Function* result)
+	{
+		Step final_step(source, step.GetMidStep(), result->to_string());
+
+		for(const Step& child : step.GetChildren()) {
+			final_step.AddChild(child);
+		}
+
+		return final_step;
+	}
+
+	Function* Product::build_simplified_result(ProductAccumulation& acc, std::vector<Function*>& new_products, Step& step)
+	{
+		Function* result = nullptr;
+
+		if(acc.constant == 0) {
+			return new Number(0);
+		}
+
+		merge_fraction_factors(acc, new_products);
+
+		result = try_build_simple_result(acc, new_products);
+		if(result) {
+			return result;
+		}
+
+		Product mid_product(new_products);
+		step.SetMidStep(mid_product.to_string());
+
+		append_accumulated_factors(acc, new_products);
+		return build_result_from_factors(new_products);
 	}
 }
