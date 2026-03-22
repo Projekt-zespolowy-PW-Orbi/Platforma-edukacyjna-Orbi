@@ -8,17 +8,19 @@ const isWindows = process.platform === "win32";
 const binaryName = isWindows ? "orbi-engine.exe" : "orbi-engine";
 const enginePath = resolve(__dirname, "../../../build", binaryName);
 
-export type PaperOpKind = "paper_add" | "paper_multiply";
+export const PaperJsonOp = {
+  Add: "paper_add",
+  Multiply: "paper_multiply",
+} as const;
+
+export type PaperOpKind = (typeof PaperJsonOp)[keyof typeof PaperJsonOp];
+
+export type PaperResult = { digits: number[][]; carries: number[][] };
 
 export type EngineResponse = {
   id: string;
   ok: boolean;
-  result?: string;
-  op?: PaperOpKind;
-  a?: string;
-  b?: string;
-  digits?: number[][];
-  carries?: number[][];
+  result?: string | PaperResult;
   error?: string;
 };
 
@@ -26,7 +28,7 @@ export type ExpectedSimplifyResult =
   | { kind: "number"; value: number }
   | { kind: "string"; value: string };
 
-export type ExpectedPaperMatrix = {
+export type ExpectedPaperResult = {
   digits: number[][];
   carries: number[][];
 };
@@ -90,14 +92,12 @@ export function sendRequest(input: object): Promise<EngineResponse> {
   });
 }
 
-export function expectResultToMatch(
-  response: EngineResponse,
-  expected: ExpectedSimplifyResult,
-): void {
+export function expectResultToMatch(response: EngineResponse, expected: ExpectedSimplifyResult): void 
+{
   expect(response.ok).toBe(true);
   expect(typeof response.result).toBe("string");
   const rawResult = (response.result as string).trim();
-  
+
   switch (expected.kind) {
     case "number": {
       const numericResult = Number(rawResult);
@@ -116,23 +116,14 @@ export function expectResultToMatch(
   }
 }
 
-export function expectPaperMatrixToMatch(
-  response: EngineResponse,
-  expected: Omit<ExpectedPaperMatrix, "op">,
-  expectedOp: PaperOpKind,
-): void {
+export function expectPaperResultToMatch(response: EngineResponse, expected: ExpectedPaperResult): void 
+{
   expect(response.ok).toBe(true);
-  expect(response.op).toBe(expectedOp);
-  expect(response.digits).toEqual(expected.digits);
-  expect(response.carries).toEqual(expected.carries);
+  expect(response.result).toEqual(expected);
 }
 
-export async function expectPaperOpToFail(
-  a: string,
-  b: string,
-  op: PaperOpKind,
-  expectedError: string,
-): Promise<void> {
+export async function expectPaperOpToFail(a: string, b: string, op: PaperOpKind, expectedError: string): Promise<void> 
+{
   const id = `${op}-err`;
   const r = await sendRequest({ id, op, a, b });
   expect(r.ok).toBe(false);
