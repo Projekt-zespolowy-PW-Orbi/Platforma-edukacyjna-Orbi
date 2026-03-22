@@ -8,16 +8,31 @@ const isWindows = process.platform === "win32";
 const binaryName = isWindows ? "orbi-engine.exe" : "orbi-engine";
 const enginePath = resolve(__dirname, "../../../build", binaryName);
 
+export const PaperJsonOp = {
+  Add: "paper_add",
+  Multiply: "paper_multiply",
+  Subtract: "paper_subtract",
+} as const;
+
+export type PaperOpKind = (typeof PaperJsonOp)[keyof typeof PaperJsonOp];
+
+export type PaperResult = { digits: number[][]; carries: number[][] };
+
 export type EngineResponse = {
   id: string;
   ok: boolean;
-  result?: string;
+  result?: string | PaperResult;
   error?: string;
 };
 
 export type ExpectedSimplifyResult =
   | { kind: "number"; value: number }
   | { kind: "string"; value: string };
+
+export type ExpectedPaperResult = {
+  digits: number[][];
+  carries: number[][];
+};
 
 const ENGINE_TIMEOUT_MS = 5_000;
 
@@ -78,14 +93,12 @@ export function sendRequest(input: object): Promise<EngineResponse> {
   });
 }
 
-export function expectResultToMatch(
-  response: EngineResponse,
-  expected: ExpectedSimplifyResult,
-): void {
+export function expectResultToMatch(response: EngineResponse, expected: ExpectedSimplifyResult): void 
+{
   expect(response.ok).toBe(true);
   expect(typeof response.result).toBe("string");
   const rawResult = (response.result as string).trim();
-  
+
   switch (expected.kind) {
     case "number": {
       const numericResult = Number(rawResult);
@@ -102,4 +115,18 @@ export function expectResultToMatch(
       throw new Error(`Unhandled expected kind: ${(_exhaustive as ExpectedSimplifyResult).kind}`);
     }
   }
+}
+
+export function expectPaperResultToMatch(response: EngineResponse, expected: ExpectedPaperResult): void 
+{
+  expect(response.ok).toBe(true);
+  expect(response.result).toEqual(expected);
+}
+
+export async function expectPaperOpToFail(a: string, b: string, op: PaperOpKind, expectedError: string): Promise<void> 
+{
+  const id = `${op}-err`;
+  const r = await sendRequest({ id, op, a, b });
+  expect(r.ok).toBe(false);
+  expect(r.error).toBe(expectedError);
 }
