@@ -4,7 +4,6 @@ import type { DragEndEvent } from "@dnd-kit/core";
 import { useState } from "react";
 import DraggableItem from "./DraggableItem";
 import DropZone from "./DropZone";
-import QuizResult from "./QuizResult";
 
 const colors = [
   { id: "red", label: "Czerwony", color: "red" },
@@ -24,8 +23,11 @@ const DragAndDropQuiz = () => {
   const [matches, setMatches] = useState<Record<string, string | null>>({});
   const usedItems = Object.values(matches).filter(Boolean);
   const [result, setResult] = useState<"correct" | "wrong" | null>(null);
+  const [showResult, setShowResult] = useState(false);
+  const [showCorrectAnswers, setShowCorrectAnswers] = useState(false);
 
   const handleDragEnd = (event: DragEndEvent) => {
+    if (showCorrectAnswers) return;
     const { active, over } = event;
 
     if (over) {
@@ -39,11 +41,8 @@ const DragAndDropQuiz = () => {
   const checkAnswers = () => {
     const allCorrect = colors.every((item) => matches[item.id] === item.id);
 
-    if (allCorrect) {
-      setResult("correct");
-    } else {
-      setResult("wrong");
-    }
+    setResult(allCorrect ? "correct" : "wrong");
+    setShowResult(true);
   };
 
   const removeMatch = (dropId: string) => {
@@ -53,13 +52,22 @@ const DragAndDropQuiz = () => {
     }));
   };
 
-  const closeResult = () => {
-    setResult(null);
+  const handleShowAnswers = () => {
+    const correctMatches: Record<string, string> = {};
+
+    colors.forEach((item) => {
+      correctMatches[item.id] = item.id;
+    });
+
+    setMatches(correctMatches);
+    setShowCorrectAnswers(true);
   };
 
   const resetQuiz = () => {
     setMatches({});
     setResult(null);
+    setShowResult(false);
+    setShowCorrectAnswers(false);
   };
 
   return (
@@ -99,11 +107,19 @@ const DragAndDropQuiz = () => {
         </div>
       </div>
       <button onClick={checkAnswers}>Sprawdź</button>
-      {result && (
-        <QuizResult
-          result={result}
-          onClose={result === "wrong" ? resetQuiz : closeResult}
-        />
+      {showResult && (
+        <div className="quiz-result-overlay">
+          <div className="quiz-result-box">
+            <h2>{result === "correct" ? "Dobrze!" : "Spróbuj jeszcze raz"}</h2>
+
+            <div className="buttons">
+              <button onClick={resetQuiz}>Reset</button>
+              <button onClick={handleShowAnswers}>
+                Pokaż poprawne odpowiedzi
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </DndContext>
   );
