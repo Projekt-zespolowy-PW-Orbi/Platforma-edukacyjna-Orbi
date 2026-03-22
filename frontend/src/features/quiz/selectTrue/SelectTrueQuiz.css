@@ -1,0 +1,34 @@
+.select-true-quiz {
+  padding: 20px;
+}
+
+.sentence {
+  display: block;
+  margin: 10px 0;
+  font-size: 18px;
+  padding: 8px;
+  border-radius: 6px;
+  transition: 0.2s;
+}
+
+/* ✅ dobrze zaznaczone */
+.sentence.correct {
+  background-color: #d4edda;
+  border: 1px solid #28a745;
+}
+
+/* ❌ źle zaznaczone */
+.sentence.wrong {
+  background-color: #f8d7da;
+  border: 1px solid #dc3545;
+}
+
+/* ⚠️ powinno być zaznaczone */
+.sentence.missed {
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+}
+
+.buttons {
+  margin-top: 20px;
+}

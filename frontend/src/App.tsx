@@ -3,6 +3,7 @@ import DragAndDropQuiz from "features/quiz/dragAndDrop/DragAndDropQuiz";
 import CategoryMatchingQuiz from "features/quiz/categoryMatchingQuiz/CategoryMatchingQuiz";
 import MatchingLinesQuiz from "features/quiz/matchingLines/MatchingLinesQuiz";
 import TrueFalseQuiz from "features/quiz/trueFalse/TrueFalseQuiz";
+import SelectTrueQuiz from "features/quiz/selectTrue/SelectTrueQuiz";
 interface DoubleResponse {
   result: number;
 }
@@ -43,6 +44,7 @@ export function App() {
       <CategoryMatchingQuiz />
       <MatchingLinesQuiz />
       <TrueFalseQuiz />
+      <SelectTrueQuiz />
     </div>
   );
 }
