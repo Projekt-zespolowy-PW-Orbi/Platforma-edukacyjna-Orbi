@@ -53,13 +53,6 @@ namespace math
 		this->products = products;
 	}
 
-	Product::~Product()
-	{
-		for(Function* product : this->products) {
-			delete product;
-		}
-	}
-
 	std::vector<Function*> Product::take_products()
 	{
 		std::vector<Function*> taken = this->products;
@@ -172,12 +165,8 @@ namespace math
 			return new Number(0);
 		}
 
-		if(!acc.other_factors.empty()) {
+		if(!new_products.empty()) {
 			return nullptr;
-		}
-
-		if(acc.powers.empty()) {
-			return new Number(acc.constant);
 		}
 
 		if(acc.powers.size() == 1) {
@@ -195,6 +184,9 @@ namespace math
 				new Number(acc.constant),
 				build_power_factor(name, power)
 			});
+		} 
+		else if(acc.powers.empty()) {
+			return new Number(acc.constant);
 		}
 
 		return nullptr;

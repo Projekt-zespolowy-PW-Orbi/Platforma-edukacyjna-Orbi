@@ -34,7 +34,6 @@ namespace math
 	public:
 		Product(std::string product);
 		Product(std::vector<Function*> products) : products(products) {}
-		~Product() override;
 		
 		std::vector<Function*> take_products();
 
