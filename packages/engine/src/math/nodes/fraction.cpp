@@ -331,13 +331,13 @@ namespace math
 
 		step.SetMidStep(this->to_string());
 		
-		//Function* reduced = reduce();
+		Function* reduced = reduce();
 
-		Step final_step(source, step.GetMidStep(), to_string());
+		Step final_step(source, step.GetMidStep(), reduced->to_string());
 		for(const Step& child : step.GetChildren()) {
 			final_step.AddChild(child);
 		}
 
-		return SimplifyResult(this, std::move(final_step));
+		return SimplifyResult(reduced, std::move(final_step));
 	}
 }

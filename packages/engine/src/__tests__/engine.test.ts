@@ -65,7 +65,7 @@ describe("orbi-engine simplify", () => {
         { name: "sums same variable", input: "x + x", expected: { kind: "string", value: "2x" } },
         { name: "sums multiple same variables", input: "2x + 3x", expected: { kind: "string", value: "5x" } },
         { name: "subtracts same variable", input: "3x - x", expected: { kind: "string", value: "2x" } },
-        { name: "sums multiple different variables", input: "2x + 3y", expected: { kind: "string", value: "" } },
+        { name: "sums multiple different variables", input: "2x + 3y", expected: { kind: "string", value: "2x+3y" } },
       ]
     },
     {
