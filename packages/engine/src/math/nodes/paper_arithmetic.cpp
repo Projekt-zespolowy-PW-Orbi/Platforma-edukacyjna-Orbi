@@ -143,29 +143,9 @@ namespace math
 	{
 		const std::vector<int> a_digits = string_to_reversed_digits(operand_a);
 		const std::vector<int> b_digits = string_to_reversed_digits(operand_b);
-		const size_t len = std::max(a_digits.size(), b_digits.size());
-
-		std::vector<int> digits;
-		std::vector<int> carries;
-
-		int carry = 0;
-		for (size_t i = 0; i < len; ++i) {
-			const int carry_in = carry;
-			const int da = (i < a_digits.size()) ? a_digits[i] : 0;
-			const int db = (i < b_digits.size()) ? b_digits[i] : 0;
-			const int sum = da + db + carry_in;
-			digits.push_back(sum % 10);
-			carries.push_back(carry_in);
-			carry = sum / 10;
-		}
-
-		if (carry > 0) {
-			digits.push_back(carry);
-			carries.push_back(carry);
-		}
-
-		result.digits.push_back(std::move(digits));
-		result.carries.push_back(std::move(carries));
+		DigitCarryRow r = add_rows({ a_digits, b_digits });
+		result.digits.push_back(std::move(r.digits));
+		result.carries.push_back(std::move(r.carries));
 		result.valid = true;
 	}
 
@@ -183,10 +163,7 @@ namespace math
 			result.carries.push_back(std::move(row.carries));
 		}
 
-		if (partial_digit_rows.size() == 1) {
-			result.digits.push_back(result.digits[0]);
-			result.carries.push_back(result.carries[0]);
-		} else {
+		if (partial_digit_rows.size() > 1) {
 			DigitCarryRow sumr = add_rows(partial_digit_rows);
 			result.digits.push_back(std::move(sumr.digits));
 			result.carries.push_back(std::move(sumr.carries));

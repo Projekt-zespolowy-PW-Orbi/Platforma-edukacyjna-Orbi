@@ -115,9 +115,9 @@ describe("orbi-engine paper arithmetic", () => {
   describe("paper_multiply", () => {
     runPaperCaseGroup("papmul", PaperJsonOp.Multiply, [
       { name: "two-digit multiplier with column sum", a: "123", b: "14", expected: { digits: [[2, 9, 4], [0, 3, 2, 1], [2, 2, 7, 1]], carries: [[0, 1, 0], [0, 0, 0, 0], [0, 0, 1, 0]] } },
-      { name: "single-digit multiplier copies partial into sum row", a: "123", b: "4", expected: { digits: [[2, 9, 4], [2, 9, 4]], carries: [[0, 1, 0], [0, 1, 0]] } },
+      { name: "single-digit multiplier is one partial row only", a: "123", b: "4", expected: { digits: [[2, 9, 4]], carries: [[0, 1, 0]] } },
       { name: "wide multiply with many partials and final column sum", a: "999", b: "999", expected: { digits: [[1, 9, 9, 8], [0, 1, 9, 9, 8], [0, 0, 1, 9, 9, 8], [1, 0, 0, 8, 9, 9]], carries: [[0, 8, 8, 8], [0, 0, 8, 8, 8], [0, 0, 0, 8, 8, 8], [0, 0, 1, 2, 2, 1]] } },
-      { name: "empty multiplicand normalizes to zero", a: "", b: "5", expected: { digits: [[0], [0]], carries: [[0], [0]] } },
+      { name: "empty multiplicand normalizes to zero", a: "", b: "5", expected: { digits: [[0]], carries: [[0]] } },
     ]);
   });
 
