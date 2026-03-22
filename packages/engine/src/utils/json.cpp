@@ -66,7 +66,7 @@ static void json_paper_op(const std::string& line, const std::string& id, math::
 	std::string a = extract_string(line, "a");
 	std::string b = extract_string(line, "b");
 	math::PaperArithmetic paper(std::move(a), std::move(b), op);
-	paper.simplify();
+	paper.execute();
 	if (!paper.get_result().valid) {
 		std::cout << "{\"id\":\"" << id << "\",\"ok\":false,\"error\":\"" << err_msg << "\"}" << std::endl;
 		return;

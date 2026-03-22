@@ -32,6 +32,6 @@ namespace math
 		const PaperResult& get_result() const { return result; }
 
 		std::string print_json() const;
-		void simplify();
+		void execute();
 	};
 }

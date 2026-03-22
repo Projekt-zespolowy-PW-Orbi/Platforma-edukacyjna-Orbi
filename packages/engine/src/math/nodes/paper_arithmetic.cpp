@@ -195,7 +195,7 @@ namespace math
 		result.valid = true;
 	}
 
-	void PaperArithmetic::simplify()
+	void PaperArithmetic::execute()
 	{
 		result = PaperResult{};
 
