@@ -11,12 +11,14 @@
 #include <functional>
 #include <sstream>
 
-static std::string escape_quotes_only(const std::string& s) {
+static std::string escape_json_string(const std::string& s) {
     std::string out;
     out.reserve(s.size());
     for (char c : s) {
         if (c == '"') {
             out += "\\\"";
+        } else if (c == '\\') {
+            out += "\\\\";
         } else {
             out += c;
         }
@@ -90,7 +92,7 @@ int json_mode() {
 				math::erase_comma_if_last(ss);
 				std::string result = ss.str();
 				math::remove_white_spaces(result);
-				std::string escaped = escape_quotes_only(result);
+				std::string escaped = escape_json_string(result);
 				std::cout << "{\"id\":\"" << id << "\",\"ok\":true,\"result\":\"" << escaped << "\"}" << std::endl;
 			}
 		},

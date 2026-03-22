@@ -65,15 +65,15 @@ describe("orbi-engine simplify", () => {
         { name: "sums same variable", input: "x + x", expected: { kind: "string", value: "2x" } },
         { name: "sums multiple same variables", input: "2x + 3x", expected: { kind: "string", value: "5x" } },
         { name: "subtracts same variable", input: "3x - x", expected: { kind: "string", value: "2x" } },
-        { name: "sums multiple different variables", input: "2x + 3y", expected: { kind: "string", value: "\"math::Sum\":{2x,3y}" } },
+        { name: "sums multiple different variables", input: "2x + 3y", expected: { kind: "string", value: "2x+3y" } },
       ]
     },
     {
       name: "fraction arithmetic",
       idPrefix: "frac",
       cases: [
-        { name: "sum of two fractions", input: "1/2 + 1/3", expected: { kind: "string", value: "\"math::Fraction\":{5,6}" } },
-        { name: "easy fraction simplification", input: "2/4", expected: { kind: "string", value: "\"math::Fraction\":{1,2}" } },
+        { name: "sum of two fractions", input: "1/2 + 1/3", expected: { kind: "string", value: "\\frac{5}{6}" } },
+        { name: "easy fraction simplification", input: "2/4", expected: { kind: "string", value: "\\frac{1}{2}" } },
         { name: "fraction with multiple variables in numerator", input: "2/4 + 5/10", expected: { kind: "number", value: 1 } },
       ],
     }
