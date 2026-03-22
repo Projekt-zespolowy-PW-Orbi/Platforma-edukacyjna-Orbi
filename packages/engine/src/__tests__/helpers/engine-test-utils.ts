@@ -11,6 +11,7 @@ const enginePath = resolve(__dirname, "../../../build", binaryName);
 export const PaperJsonOp = {
   Add: "paper_add",
   Multiply: "paper_multiply",
+  Subtract: "paper_subtract",
 } as const;
 
 export type PaperOpKind = (typeof PaperJsonOp)[keyof typeof PaperJsonOp];

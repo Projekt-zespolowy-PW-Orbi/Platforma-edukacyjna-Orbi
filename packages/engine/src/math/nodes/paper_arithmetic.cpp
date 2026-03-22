@@ -60,13 +60,55 @@ namespace math
 			return r;
 		}
 
-		DigitCarryRow multiply_one_digit_row(const std::vector<int>& multiplicand_digits, int digit, int shift_j)
+		void pad_reversed_to_same_length(std::vector<int>& a, std::vector<int>& b)
+		{
+			const size_t n = std::max(a.size(), b.size());
+			while (a.size() < n)
+				a.push_back(0);
+			while (b.size() < n)
+				b.push_back(0);
+		}
+
+		
+		DigitCarryRow subtract_padded(std::vector<int> a, std::vector<int> b)
+		{
+			DigitCarryRow r;
+			pad_reversed_to_same_length(a, b);
+			int borrow_in = 0;
+			for (size_t k = 0; k < a.size(); ++k) {
+				const int ak = a[static_cast<size_t>(k)] - borrow_in;
+				const int bk = b[static_cast<size_t>(k)];
+				int borrow_out = 0;
+				int digit;
+				if (ak < bk) {
+					digit = ak + 10 - bk;
+					borrow_out = 1;
+					borrow_in = 1;
+				} else {
+					digit = ak - bk;
+					borrow_in = 0;
+				}
+				r.digits.push_back(digit);
+				r.carries.push_back(borrow_out);
+			}
+			trim_leading_zeros_pair(r.digits, r.carries);
+			return r;
+		}
+
+		bool greater_than_or_equal_to(const std::string& a, const std::string& b)
+		{
+			if (a.size() != b.size())
+				return a.size() > b.size();
+			return a >= b;
+		}
+
+		DigitCarryRow multiply_one_digit_row(const std::vector<int>& row_to_multiply, int digit, int shift_j)
 		{
 			DigitCarryRow row;
 			int carry = 0;
-			for (size_t i = 0; i < multiplicand_digits.size(); ++i) {
+			for (size_t i = 0; i < row_to_multiply.size(); ++i) {
 				const int carry_in = carry;
-				const int t = multiplicand_digits[static_cast<size_t>(i)] * digit + carry_in;
+				const int t = row_to_multiply[static_cast<size_t>(i)] * digit + carry_in;
 				row.digits.push_back(t % 10);
 				row.carries.push_back(carry_in);
 				carry = t / 10;
@@ -149,15 +191,25 @@ namespace math
 		result.valid = true;
 	}
 
+	void PaperArithmetic::compute_subtract()
+	{
+		const std::vector<int> a_digits = string_to_reversed_digits(operand_a);
+		const std::vector<int> b_digits = string_to_reversed_digits(operand_b);
+		DigitCarryRow r = subtract_padded(a_digits, b_digits);
+		result.digits.push_back(std::move(r.digits));
+		result.carries.push_back(std::move(r.carries));
+		result.valid = true;
+	}
+
 	void PaperArithmetic::compute_multiply()
 	{
-		const std::vector<int> multiplicand_digits = string_to_reversed_digits(operand_a);
+		const std::vector<int> a_digits = string_to_reversed_digits(operand_a);
 		std::vector<std::vector<int>> partial_digit_rows;
 		partial_digit_rows.reserve(operand_b.size());
 
 		for (int j = 0; j < static_cast<int>(operand_b.size()); ++j) {
 			const int d = operand_b[static_cast<size_t>(operand_b.size() - 1 - static_cast<size_t>(j))] - '0';
-			DigitCarryRow row = multiply_one_digit_row(multiplicand_digits, d, j);
+			DigitCarryRow row = multiply_one_digit_row(a_digits, d, j);
 			partial_digit_rows.push_back(row.digits);
 			result.digits.push_back(std::move(row.digits));
 			result.carries.push_back(std::move(row.carries));
@@ -187,6 +239,13 @@ namespace math
 
 		if (operation == PaperOperation::Add) {
 			compute_add();
+			return;
+		}
+
+		if (operation == PaperOperation::Subtract) {
+			if (!greater_than_or_equal_to(operand_a, operand_b))
+				return;
+			compute_subtract();
 			return;
 		}
 

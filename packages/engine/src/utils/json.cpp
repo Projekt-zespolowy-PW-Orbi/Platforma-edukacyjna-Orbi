@@ -116,6 +116,11 @@ int json_mode() {
 				json_paper_op(line, id, math::PaperOperation::Multiply, "invalid paper_multiply operands");
 			}
 		},
+		{
+			"paper_subtract", [&line, &id] {
+				json_paper_op(line, id, math::PaperOperation::Subtract, "invalid paper_subtract operands");
+			}
+		},
 	};
 
 	if (auto it = action.find(op); it != action.end())

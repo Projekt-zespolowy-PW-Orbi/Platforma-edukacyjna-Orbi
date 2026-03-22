@@ -24,6 +24,7 @@ namespace math
 		static bool validate_operand(const std::string& normalized);
 		static std::string normalize(std::string s);
 		void compute_add();
+		void compute_subtract();
 		void compute_multiply();
 
 	public:
