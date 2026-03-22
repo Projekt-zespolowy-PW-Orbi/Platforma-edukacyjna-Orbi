@@ -72,7 +72,7 @@ static void json_paper_op(const std::string& line, const std::string& id, math::
 		return;
 	}
 	std::string json = paper.print_json();
-	std::cout << "{\"id\":\"" << id << "\",\"ok\":true," << json.substr(1) << std::endl;
+	std::cout << "{\"id\":\"" << id << "\",\"ok\":true,\"result\":" << json << "}" << std::endl;
 }
 
 int json_mode() {
